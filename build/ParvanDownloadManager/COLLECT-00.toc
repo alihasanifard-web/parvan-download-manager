@@ -1,0 +1,281 @@
+([('ParvanDownloadManager.exe',
+   'C:\\Users\\V I S I O '
+   'N\\parvan-download-manager\\build\\ParvanDownloadManager\\ParvanDownloadManager.exe',
+   'EXECUTABLE'),
+  ('VCRUNTIME140.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\VCRUNTIME140.dll',
+   'BINARY'),
+  ('VCRUNTIME140_1.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\VCRUNTIME140_1.dll',
+   'BINARY'),
+  ('_asyncio.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_asyncio.pyd',
+   'EXTENSION'),
+  ('_bz2.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_bz2.pyd',
+   'EXTENSION'),
+  ('_cffi_backend.cp314-win_amd64.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\_cffi_backend.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('_ctypes.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_ctypes.pyd',
+   'EXTENSION'),
+  ('_decimal.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_decimal.pyd',
+   'EXTENSION'),
+  ('_elementtree.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_elementtree.pyd',
+   'EXTENSION'),
+  ('_hashlib.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_hashlib.pyd',
+   'EXTENSION'),
+  ('_lzma.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_lzma.pyd',
+   'EXTENSION'),
+  ('_multiprocessing.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_multiprocessing.pyd',
+   'EXTENSION'),
+  ('_overlapped.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_overlapped.pyd',
+   'EXTENSION'),
+  ('_queue.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_queue.pyd',
+   'EXTENSION'),
+  ('_socket.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_socket.pyd',
+   'EXTENSION'),
+  ('_ssl.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_ssl.pyd',
+   'EXTENSION'),
+  ('_uuid.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_uuid.pyd',
+   'EXTENSION'),
+  ('_wmi.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_wmi.pyd',
+   'EXTENSION'),
+  ('_zstd.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\_zstd.pyd',
+   'EXTENSION'),
+  ('base_library.zip',
+   'C:\\Users\\V I S I O '
+   'N\\parvan-download-manager\\build\\ParvanDownloadManager\\base_library.zip',
+   'DATA'),
+  ('clr_loader\\ffi\\dlls\\amd64\\ClrLoader.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\clr_loader\\ffi\\dlls\\amd64\\ClrLoader.dll',
+   'BINARY'),
+  ('clr_loader\\ffi\\dlls\\x86\\ClrLoader.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\clr_loader\\ffi\\dlls\\x86\\ClrLoader.dll',
+   'BINARY'),
+  ('cryptography-50.0.1.dist-info\\INSTALLER',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\INSTALLER',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\METADATA',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\METADATA',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\RECORD',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\RECORD',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\REQUESTED',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\REQUESTED',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\WHEEL',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\WHEEL',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\licenses\\LICENSE',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\licenses\\LICENSE',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\licenses\\LICENSE.APACHE',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\licenses\\LICENSE.APACHE',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\licenses\\LICENSE.BSD',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\licenses\\LICENSE.BSD',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\sboms\\cryptography-rust.cyclonedx.json',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\sboms\\cryptography-rust.cyclonedx.json',
+   'DATA'),
+  ('cryptography-50.0.1.dist-info\\sboms\\sbom.json',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography-50.0.1.dist-info\\sboms\\sbom.json',
+   'DATA'),
+  ('cryptography\\hazmat\\bindings\\_rust.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\cryptography\\hazmat\\bindings\\_rust.pyd',
+   'EXTENSION'),
+  ('icon.ico',
+   'C:\\Users\\V I S I O N\\parvan-download-manager\\icon.ico',
+   'DATA'),
+  ('index.html',
+   'C:\\Users\\V I S I O N\\parvan-download-manager\\index.html',
+   'DATA'),
+  ('libcrypto-3-x64.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\libcrypto-3-x64.dll',
+   'BINARY'),
+  ('libffi-8.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\libffi-8.dll',
+   'BINARY'),
+  ('libssl-3-x64.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\libssl-3-x64.dll',
+   'BINARY'),
+  ('logo.png',
+   'C:\\Users\\V I S I O N\\parvan-download-manager\\logo.png',
+   'DATA'),
+  ('logo.svg',
+   'C:\\Users\\V I S I O N\\parvan-download-manager\\logo.svg',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\INSTALLER',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\INSTALLER',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\METADATA',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\METADATA',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\RECORD',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\RECORD',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\REQUESTED',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\REQUESTED',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\WHEEL',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\WHEEL',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\licenses\\LICENSE.txt',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\licenses\\LICENSE.txt',
+   'DATA'),
+  ('markupsafe-3.0.3.dist-info\\top_level.txt',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe-3.0.3.dist-info\\top_level.txt',
+   'DATA'),
+  ('markupsafe\\_speedups.cp314-win_amd64.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\markupsafe\\_speedups.cp314-win_amd64.pyd',
+   'EXTENSION'),
+  ('pyexpat.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\pyexpat.pyd',
+   'EXTENSION'),
+  ('python3.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\python3.dll',
+   'BINARY'),
+  ('python314.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\python314.dll',
+   'BINARY'),
+  ('pythonnet\\runtime\\Python.Runtime.deps.json',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\pythonnet\\runtime\\Python.Runtime.deps.json',
+   'DATA'),
+  ('pythonnet\\runtime\\Python.Runtime.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\pythonnet\\runtime\\Python.Runtime.dll',
+   'BINARY'),
+  ('pythonnet\\runtime\\Python.Runtime.xml',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\pythonnet\\runtime\\Python.Runtime.xml',
+   'DATA'),
+  ('select.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\select.pyd',
+   'EXTENSION'),
+  ('setuptools\\_vendor\\jaraco\\text\\Lorem ipsum.txt',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\setuptools\\_vendor\\jaraco\\text\\Lorem '
+   'ipsum.txt',
+   'DATA'),
+  ('unicodedata.pyd',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\tools\\python-3.14.7+20260901-win32-x64\\DLLs\\unicodedata.pyd',
+   'EXTENSION'),
+  ('webview\\js\\api.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\api.js',
+   'DATA'),
+  ('webview\\js\\customize.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\customize.js',
+   'DATA'),
+  ('webview\\js\\finish.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\finish.js',
+   'DATA'),
+  ('webview\\js\\lib\\dom_json.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\lib\\dom_json.js',
+   'DATA'),
+  ('webview\\js\\lib\\polyfill.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\lib\\polyfill.js',
+   'DATA'),
+  ('webview\\js\\state.js',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\js\\state.js',
+   'DATA'),
+  ('webview\\lib\\Microsoft.Web.WebView2.Core.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\Microsoft.Web.WebView2.Core.dll',
+   'BINARY'),
+  ('webview\\lib\\Microsoft.Web.WebView2.WinForms.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\Microsoft.Web.WebView2.WinForms.dll',
+   'BINARY'),
+  ('webview\\lib\\WebBrowserInterop.x64.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\WebBrowserInterop.x64.dll',
+   'BINARY'),
+  ('webview\\lib\\WebBrowserInterop.x86.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\WebBrowserInterop.x86.dll',
+   'BINARY'),
+  ('webview\\lib\\pywebview-android.jar',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\pywebview-android.jar',
+   'DATA'),
+  ('webview\\lib\\runtimes\\win-arm64\\native\\WebView2Loader.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\runtimes\\win-arm64\\native\\WebView2Loader.dll',
+   'BINARY'),
+  ('webview\\lib\\runtimes\\win-x64\\native\\WebView2Loader.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\runtimes\\win-x64\\native\\WebView2Loader.dll',
+   'BINARY'),
+  ('webview\\lib\\runtimes\\win-x86\\native\\WebView2Loader.dll',
+   'C:\\Users\\V I S I O '
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\webview\\lib\\runtimes\\win-x86\\native\\WebView2Loader.dll',
+   'BINARY')],)
