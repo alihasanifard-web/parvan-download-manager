@@ -42,9 +42,9 @@
    'C:\\Users\\V I S I O '
    'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
    'PYSOURCE'),
-  ('pyi_rth_cryptography_openssl',
+  ('pyi_rth__tkinter',
    'C:\\Users\\V I S I O '
-   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_cryptography_openssl.py',
+   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
    'PYSOURCE'),
   ('pyi_rth_pkgutil',
    'C:\\Users\\V I S I O '
@@ -53,10 +53,6 @@
   ('pyi_rth_multiprocessing',
    'C:\\Users\\V I S I O '
    'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
-   'PYSOURCE'),
-  ('pyi_rth_setuptools',
-   'C:\\Users\\V I S I O '
-   'N\\AppData\\Local\\hermes\\installs\\29bb8c0b3ad4b6fa\\environments\\4d12117631fd4eb185d5850249a8d4c2\\venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
    'PYSOURCE'),
   ('app',
    'C:\\Users\\V I S I O N\\parvan-download-manager\\app.py',

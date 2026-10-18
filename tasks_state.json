@@ -4,98 +4,98 @@
     "filename": "VSCode-Setup-x64-1.95.2.exe",
     "url": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user",
     "category": "app",
-    "status": "downloading",
+    "status": "paused",
     "total_size": 120586240,
     "total_size_fmt": "115.0 MB",
-    "downloaded_bytes": 107479040,
-    "downloaded_bytes_fmt": "102.5 MB",
-    "progress_percent": 89.1,
-    "speed_bps": 40370176.0,
-    "speed_fmt": "38.5 MB/s",
-    "eta_seconds": 1,
-    "eta_fmt": "1s",
+    "downloaded_bytes": 108003328,
+    "downloaded_bytes_fmt": "103.0 MB",
+    "progress_percent": 89.6,
+    "speed_bps": 0,
+    "speed_fmt": "0.0 MB/s",
+    "eta_seconds": 2,
+    "eta_fmt": "2s",
     "num_threads": 16,
     "save_path": "C:\\Users\\V I S I O N\\Downloads\\VSCode-Setup-x64-1.95.2.exe",
     "chunks": [
       {
         "id": 0,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.03
       },
       {
         "id": 1,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.03
       },
       {
         "id": 2,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 3,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.02
       },
       {
         "id": 4,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 5,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 6,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 7,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 8,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 9,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 10,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 11,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 12,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 13,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 14,
         "status": "active",
-        "progress": 0.6
+        "progress": 0.0
       },
       {
         "id": 15,
         "status": "active",
-        "progress": 0.6
+        "progress": 0.0
       }
     ]
   },
@@ -104,97 +104,97 @@
     "filename": "ubuntu-24.04.1-desktop-amd64.iso",
     "url": "https://releases.ubuntu.com/24.04.1/ubuntu-24.04.1-desktop-amd64.iso",
     "category": "iso",
-    "status": "downloading",
+    "status": "paused",
     "total_size": 6227702579,
     "total_size_fmt": "5.8 GB",
     "downloaded_bytes": 3060164198,
     "downloaded_bytes_fmt": "2.85 GB",
     "progress_percent": 49.1,
-    "speed_bps": 25375539.2,
-    "speed_fmt": "24.2 MB/s",
-    "eta_seconds": 115,
-    "eta_fmt": "1m 55s",
+    "speed_bps": 0,
+    "speed_fmt": "0.0 MB/s",
+    "eta_seconds": 19,
+    "eta_fmt": "19s",
     "num_threads": 16,
     "save_path": "C:\\Users\\V I S I O N\\Downloads\\ubuntu-24.04.1-desktop-amd64.iso",
     "chunks": [
       {
         "id": 0,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 1,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 2,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 3,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 4,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 5,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 6,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 7,
-        "status": "done",
-        "progress": 1.0
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 8,
-        "status": "active",
-        "progress": 0.6
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 9,
-        "status": "active",
-        "progress": 0.6
+        "status": "error",
+        "progress": 0.0
       },
       {
         "id": 10,
-        "status": "pending",
+        "status": "error",
         "progress": 0.0
       },
       {
         "id": 11,
-        "status": "pending",
+        "status": "active",
         "progress": 0.0
       },
       {
         "id": 12,
-        "status": "pending",
+        "status": "active",
         "progress": 0.0
       },
       {
         "id": 13,
-        "status": "pending",
+        "status": "active",
         "progress": 0.0
       },
       {
         "id": 14,
-        "status": "pending",
+        "status": "active",
         "progress": 0.0
       },
       {
         "id": 15,
-        "status": "pending",
+        "status": "active",
         "progress": 0.0
       }
     ]
@@ -204,83 +204,183 @@
     "filename": "docker-desktop-installer-4.35.exe",
     "url": "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe",
     "category": "app",
-    "status": "downloading",
+    "status": "paused",
     "total_size": 650117120,
     "total_size_fmt": "620.0 MB",
-    "downloaded_bytes": 513802240,
-    "downloaded_bytes_fmt": "490.0 MB",
-    "progress_percent": 79.0,
-    "speed_bps": 10171187.2,
-    "speed_fmt": "9.7 MB/s",
-    "eta_seconds": 13,
-    "eta_fmt": "13s",
+    "downloaded_bytes": 515637248,
+    "downloaded_bytes_fmt": "491.75 MB",
+    "progress_percent": 79.3,
+    "speed_bps": 0,
+    "speed_fmt": "0.0 MB/s",
+    "eta_seconds": 5,
+    "eta_fmt": "5s",
     "num_threads": 16,
     "save_path": "C:\\Users\\V I S I O N\\Downloads\\docker-desktop-installer-4.35.exe",
     "chunks": [
       {
         "id": 0,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.01
       },
       {
         "id": 1,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.01
       },
       {
         "id": 2,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 3,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 4,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 5,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 6,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 7,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 8,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.01
       },
       {
         "id": 9,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.01
       },
       {
         "id": 10,
-        "status": "done",
-        "progress": 1.0
+        "status": "active",
+        "progress": 0.0
       },
       {
         "id": 11,
         "status": "active",
-        "progress": 0.6
+        "progress": 0.0
       },
       {
         "id": 12,
         "status": "active",
-        "progress": 0.6
+        "progress": 0.0
+      },
+      {
+        "id": 13,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 14,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 15,
+        "status": "active",
+        "progress": 0.0
+      }
+    ]
+  },
+  {
+    "id": "parvan-1792353109898",
+    "filename": "WebStorm-2024.3.exe",
+    "url": "https://download.jetbrains.com/webstorm/WebStorm-2024.3.exe",
+    "category": "app",
+    "status": "paused",
+    "total_size": 833737944,
+    "total_size_fmt": "795.11 MB",
+    "downloaded_bytes": 0,
+    "downloaded_bytes_fmt": "0 B",
+    "progress_percent": 0.0,
+    "speed_bps": 0,
+    "speed_fmt": "0.0 MB/s",
+    "eta_seconds": 0,
+    "eta_fmt": "0s",
+    "num_threads": 16,
+    "save_path": "C:\\Users\\V I S I O N\\Downloads\\WebStorm-2024.3.exe",
+    "chunks": [
+      {
+        "id": 0,
+        "status": "paused",
+        "progress": 0.0
+      },
+      {
+        "id": 1,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 2,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 3,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 4,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 5,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 6,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 7,
+        "status": "active",
+        "progress": 0.0
+      },
+      {
+        "id": 8,
+        "status": "pending",
+        "progress": 0.0
+      },
+      {
+        "id": 9,
+        "status": "pending",
+        "progress": 0.0
+      },
+      {
+        "id": 10,
+        "status": "pending",
+        "progress": 0.0
+      },
+      {
+        "id": 11,
+        "status": "pending",
+        "progress": 0.0
+      },
+      {
+        "id": 12,
+        "status": "pending",
+        "progress": 0.0
       },
       {
         "id": 13,
@@ -298,24 +398,5 @@
         "progress": 0.0
       }
     ]
-  },
-  {
-    "id": "parvan-1792353109898",
-    "filename": "WebStorm-2024.3.exe",
-    "url": "https://download.jetbrains.com/webstorm/WebStorm-2024.3.exe",
-    "category": "app",
-    "status": "downloading",
-    "total_size": 0,
-    "total_size_fmt": "0 B",
-    "downloaded_bytes": 0,
-    "downloaded_bytes_fmt": "0 B",
-    "progress_percent": 0,
-    "speed_bps": 0,
-    "speed_fmt": "0.0 MB/s",
-    "eta_seconds": 0,
-    "eta_fmt": "0s",
-    "num_threads": 16,
-    "save_path": "C:\\Users\\V I S I O N\\Downloads\\WebStorm-2024.3.exe",
-    "chunks": []
   }
 ]

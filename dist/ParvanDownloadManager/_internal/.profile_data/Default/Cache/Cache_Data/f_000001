@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="alternate icon" href="icon.ico">
+  
+  <!-- Modern Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --font-fa: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* OLED Deep Tech Palette (UI/UX Pro Max certified) */
+      --bg-base: #07090E;
+      --bg-sidebar: #0B0F19;
+      --bg-surface: #101626;
+      --bg-surface-elevated: #162035;
+      --bg-card: rgba(16, 22, 38, 0.75);
+      --border-subtle: #1C2740;
+      --border-active: #2D3F66;
+      
+      --cyan-neon: #00F5FF;
+      --cyan-glow: rgba(0, 245, 255, 0.28);
+      --emerald-neon: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --amber-neon: #F59E0B;
+      --violet-neon: #8B5CF6;
+      --rose-neon: #F43F5E;
+      
+      --text-main: #F3F4F6;
+      --text-muted: #94A3B8;
+      --text-dim: #4B5565;
+      
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-full: 9999px;
+      
+      --transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-fa);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-active);
+      border-radius: var(--radius-full);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--cyan-neon);
+    }
+
+    /* Top Window Chrome */
+    .titlebar {
+      height: 48px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 100;
+    }
+
+    .titlebar-right-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .brand-icon-box {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #00F5FF, #2563EB);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #07090E;
+      font-weight: 900;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .brand-name {
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .brand-badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 245, 255, 0.12);
+      border: 1px solid rgba(0, 245, 255, 0.35);
+      color: var(--cyan-neon);
+    }
+
+    .titlebar-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .telemetry-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald-neon);
+      box-shadow: 0 0 10px var(--emerald-neon);
+      animation: pulseAnim 1.8s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .titlebar-left-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      direction: ltr;
+    }
+
+    .win-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: opacity var(--transition);
+    }
+    .win-close { background: #FF5F56; }
+    .win-min { background: #FFBD2E; }
+    .win-max { background: #27C93F; }
+    .win-btn:hover { opacity: 0.8; }
+
+    /* App Workspace */
+    .app-workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: var(--bg-sidebar);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 14px;
+      gap: 22px;
+    }
+
+    .btn-new-task {
+      background: linear-gradient(135deg, #00F5FF 0%, #2563EB 100%);
+      color: #07090E;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--cyan-glow);
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .btn-new-task:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 26px rgba(0, 245, 255, 0.45);
+    }
+
+    .nav-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      padding: 0 8px;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all var(--transition);
+    }
+    .nav-link:hover {
+      background: var(--bg-surface);
+      color: var(--text-main);
+    }
+    .nav-link.active {
+      background: var(--bg-surface-elevated);
+      color: var(--cyan-neon);
+      font-weight: 700;
+    }
+
+    .nav-link-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-count {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-dim);
+    }
+    .nav-link.active .badge-count {
+      border-color: rgba(0, 245, 255, 0.4);
+      color: var(--cyan-neon);
+    }
+
+    /* Speed Limiter in Sidebar */
+    .sidebar-limiter {
+      margin-top: auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+
+    .limiter-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .slider-styled {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      background: var(--border-active);
+      border-radius: var(--radius-full);
+      outline: none;
+      cursor: pointer;
+    }
+    .slider-styled::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--cyan-neon);
+      box-shadow: 0 0 10px var(--cyan-glow);
+      cursor: pointer;
+      transition: transform var(--transition);
+    }
+    .slider-styled::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Main Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base);
+      overflow: hidden;
+    }
+
+    /* Top Telemetry Dashboard (3 Key Metrics: Download Speed, Incoming Internet Line, Total Volume) */
+    .telemetry-dashboard {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: linear-gradient(180deg, rgba(16, 22, 38, 0.8) 0%, rgba(7, 9, 14, 0.4) 100%);
+      display: grid;
+      grid-template-columns: 240px 240px 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card.accent-cyan { border-top: 3px solid var(--cyan-neon); }
+    .metric-card.accent-emerald { border-top: 3px solid var(--emerald-neon); }
+
+    .metric-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.85rem;
+      font-weight: 800;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .val-cyan {
+      color: var(--cyan-neon);
+      text-shadow: 0 0 16px var(--cyan-glow);
+    }
+    .val-emerald {
+      color: var(--emerald-neon);
+      text-shadow: 0 0 16px var(--emerald-glow);
+    }
+
+    .metric-unit {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .metric-sub {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      margin-top: 2px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Live Graph Box */
+    .chart-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      height: 94px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .chart-legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .legend-bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    canvas#dualSpeedChart {
+      width: 100%;
+      height: 52px;
+      display: block;
+    }
+
+    /* Action Toolbar */
+    .action-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .search-wrap {
+      position: relative;
+      width: 280px;
+    }
+
+    .search-bar {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 36px 8px 12px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+    .search-bar:focus {
+      border-color: var(--cyan-neon);
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+
+    .search-icon-pos {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+
+    .toolbar-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition);
+    }
+    .btn-pill:hover {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border-color: var(--border-active);
+    }
+
+    /* Tasks Queue View */
+    .queue-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Task Card */
+    .task-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      transition: all var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+    .task-card:hover {
+      border-color: var(--border-active);
+      background: var(--bg-card);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .task-card.active-state {
+      border-right: 3px solid var(--cyan-neon);
+    }
+
+    .task-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .task-file-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+    .icon-app { background: rgba(0, 245, 255, 0.12); color: var(--cyan-neon); border: 1px solid rgba(0, 245, 255, 0.3); }
+    .icon-iso { background: rgba(139, 92, 246, 0.12); color: var(--violet-neon); border: 1px solid rgba(139, 92, 246, 0.3); }
+    .icon-zip { background: rgba(245, 158, 11, 0.12); color: var(--amber-neon); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    .task-name-col {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .task-filename {
+      font-weight: 700;
+      font-size: 0.96rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+      direction: ltr;
+      text-align: right;
+    }
+
+    .task-meta-stats {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .task-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-circle:hover {
+      background: var(--border-active);
+      color: var(--text-main);
+    }
+    .btn-circle.danger:hover {
+      background: rgba(244, 63, 94, 0.2);
+      border-color: var(--rose-neon);
+      color: var(--rose-neon);
+    }
+
+    /* 16-Thread Visualizer Matrix */
+    .matrix-box {
+      background: rgba(7, 9, 14, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .matrix-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(16, 1fr);
+      gap: 4px;
+      height: 12px;
+    }
+
+    .thread-block {
+      background: var(--border-subtle);
+      border-radius: 2px;
+      transition: all 250ms;
+    }
+    .thread-block.done {
+      background: var(--cyan-neon);
+      box-shadow: 0 0 6px var(--cyan-glow);
+    }
+    .thread-block.active {
+      background: linear-gradient(90deg, #00F5FF, #2563EB);
+      animation: pulseBlock 1.2s infinite alternate;
+    }
+    @keyframes pulseBlock {
+      0% { opacity: 0.35; }
+      100% { opacity: 1; }
+    }
+
+    /* Modal for New Task */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      width: 580px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-active);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px var(--cyan-glow);
+      overflow: hidden;
+      transform: scale(0.96);
+      transition: transform var(--transition);
+    }
+    .modal-overlay.show .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-head {
+      padding: 16px 22px;
+      background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+    }
+
+    .modal-content {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .input-text {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      direction: ltr;
+      outline: none;
+    }
+    .input-text:focus {
+      border-color: var(--cyan-neon);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .thread-select-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .thread-opt {
+      padding: 8px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .thread-opt.active {
+      background: rgba(0, 245, 255, 0.15);
+      border-color: var(--cyan-neon);
+      color: var(--cyan-neon);
+    }
+
+    .modal-bottom {
+      padding: 16px 22px;
+      background: var(--bg-surface-elevated);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Window Header -->
+  <header class="titlebar">
+    <div class="titlebar-right-group">
+      <div class="app-brand">
+        <img src="logo.svg" alt="Parvan Logo" style="width: 30px; height: 30px; filter: drop-shadow(0 0 8px var(--cyan-glow));" />
+        <span class="brand-name">پروان دانلود منیجر</span>
+        <span class="brand-badge">PARVAN DL v2.5</span>
+      </div>
+    </div>
+
+    <div class="titlebar-center">
+      <div class="telemetry-indicator">
+        <span class="pulse-dot"></span>
+        <span>LINE STATUS: OPTIMAL</span>
+      </div>
+      <span>|</span>
+      <div>RELAY: <span style="color: var(--text-main);">TEHRAN-IX / FRANKFURT</span></div>
+      <span>|</span>
+      <div>LATENCY: <span style="color: var(--emerald-neon);">18ms</span></div>
+    </div>
+
+    <div class="titlebar-left-group">
+      <button class="btn-pill" id="btnOpenSettings" style="padding: 4px 10px; font-size: 0.78rem;">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>تنظیمات</span>
+      </button>
+      <div class="window-controls">
+        <div class="win-btn win-close" title="بستن"></div>
+        <div class="win-btn win-min" title="کوچک‌نمایی"></div>
+        <div class="win-btn win-max" title="تمام‌صفحه"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Body -->
+  <div class="app-workspace">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <button class="btn-new-task" id="btnOpenModal">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+        </svg>
+        دانلود جدید
+      </button>
+
+      <div>
+        <div class="nav-section-title">صف‌های دانلود</div>
+        <ul class="nav-list">
+          <li class="nav-link active" data-tab="all">
+            <div class="nav-link-right">
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span>همه دانلودها</span>
+            </div>
+            <span class="badge-count" id="countAll">۰</span>
+          </li>
+          <li class="nav-link" data-tab="downloading">
+            <div class="nav-link-right">
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>در حال دانلود</span>
+            </div>
+            <span class="badge-count" id="countActive">۰</span>
+          </li>
+          <li class="nav-link" data-tab="completed">
+            <div class="nav-link-right">
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>تکمیل شده‌ها</span>
+            </div>
+            <span class="badge-count" id="countCompleted">۰</span>
+          </li>
+          <li class="nav-link" data-tab="scheduled">
+            <div class="nav-link-right">
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>زمان‌بندی شبانه</span>
+            </div>
+            <span class="badge-count" id="countScheduled">۰</span>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="nav-section-title">دسته‌بندی‌ها</div>
+        <ul class="nav-list">
+          <li class="nav-link" data-cat="app">
+            <div class="nav-link-right">
+              <span style="color: var(--cyan-neon);">●</span>
+              <span>برنامه‌ها و نصبی‌ها</span>
+            </div>
+            <span class="badge-count" id="countApp">۰</span>
+          </li>
+          <li class="nav-link" data-cat="iso">
+            <div class="nav-link-right">
+              <span style="color: var(--violet-neon);">●</span>
+              <span>ایمیج‌ها و ISO</span>
+            </div>
+            <span class="badge-count" id="countIso">۰</span>
+          </li>
+          <li class="nav-link" data-cat="archive">
+            <div class="nav-link-right">
+              <span style="color: var(--amber-neon);">●</span>
+              <span>فایل‌های فشرده (ZIP/RAR)</span>
+            </div>
+            <span class="badge-count" id="countArchive">۰</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Limiter -->
+      <div class="sidebar-limiter">
+        <div class="limiter-header">
+          <span>محدودکننده پهنای باند</span>
+          <span id="txtLimit" style="color: var(--cyan-neon); font-family: var(--font-mono);">نامحدود</span>
+        </div>
+        <input type="range" class="slider-styled" id="rangeLimiter" min="5" max="150" value="150">
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="main-content">
+      <!-- Top 3 Key Metrics Dashboard -->
+      <section class="telemetry-dashboard">
+        <!-- 1. خالص سرعت دانلود فعلی -->
+        <div class="metric-card accent-cyan">
+          <div class="metric-title">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--cyan-neon);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+            <span>سرعت دانلود خالص (Net Speed)</span>
+          </div>
+          <div class="metric-value val-cyan">
+            <span id="speedVal">0.0</span>
+            <span class="metric-unit">MB/s</span>
+          </div>
+          <div class="metric-sub">
+            <span id="activeConnectionsLabel">کانکشن فعال: ۰</span>
+            <span style="color: var(--cyan-neon);" id="peakSpeedLabel">اوج سرعت: ۰.۰ MB/s</span>
+          </div>
+        </div>
+
+        <!-- 2. سرعت اینترنت ورودی خط برای دانلود -->
+        <div class="metric-card accent-emerald">
+          <div class="metric-title">
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--emerald-neon);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>سرعت اینترنت ورودی خط (Bandwidth)</span>
+          </div>
+          <div class="metric-value val-emerald">
+            <span id="bandwidthVal">0</span>
+            <span class="metric-unit">Mbps</span>
+          </div>
+          <div class="metric-sub">
+            <span id="lineStatusLabel">وضعیت خط: آماده</span>
+            <span style="color: var(--emerald-neon);" id="pingLabel">پینگ: ۱۸ms</span>
+          </div>
+        </div>
+
+        <!-- Real-time Dual Line Chart (Download Speed vs Line Bandwidth) -->
+        <div class="chart-box">
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-bullet" style="background: var(--cyan-neon);"></span>
+              <span>سرعت دانلود</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-bullet" style="background: var(--emerald-neon);"></span>
+              <span>ورودی اینترنت</span>
+            </div>
+            <span style="color: var(--text-dim); font-size: 0.68rem;">زنده (Live Telemetry)</span>
+          </div>
+          <canvas id="dualSpeedChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Action Toolbar -->
+      <section class="action-toolbar">
+        <div class="search-wrap">
+          <svg class="search-icon-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="text" class="search-bar" id="inputSearch" placeholder="جستجو در نام فایل‌ها و لینک‌ها...">
+        </div>
+
+        <div class="toolbar-buttons">
+          <button class="btn-pill" id="btnStartAll" title="شروع یا ادامه تمام دانلودهای صف">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            </svg>
+            شروع همه
+          </button>
+          <button class="btn-pill" id="btnPauseAll" title="توقف موقت تمام دانلودها">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+            </svg>
+            توقف همه
+          </button>
+          <button class="btn-pill" id="btnClearCompleted" title="پاکسازی دانلودهای تکمیل شده از لیست">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            پاکسازی تکمیل‌شده‌ها
+          </button>
+        </div>
+
+        <!-- 3. حجم کل اپ‌های در حال دانلود -->
+        <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+          مجموع حجم دانلود صف: <span style="color: var(--cyan-neon); font-weight: 700;" id="totalQueueSizeLabel">۰ گیگابایت</span>
+        </div>
+      </section>
+
+      <!-- Downloads List (Rendered dynamically from backend) -->
+      <section class="queue-scroll" id="queueList">
+        <div id="queuePlaceholder" style="text-align: center; padding: 70px 20px; color: var(--text-muted);">
+          <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 12px; opacity: 0.5; color: var(--cyan-neon);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <div style="font-size: 1rem; font-weight: 600; margin-bottom: 6px;">در حال بارگذاری لیست دانلودها...</div>
+          <div style="font-size: 0.82rem; color: var(--text-dim);">برای افزودن دانلود جدید، روی دکمه «دانلود جدید» کلیک کنید.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal New Task -->
+  <div class="modal-overlay" id="modalTask">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--cyan-neon);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          افزودن دانلود شتاب‌یافته جدید در پروان
+        </div>
+        <div style="cursor: pointer;" id="btnCloseModal">✕</div>
+      </div>
+
+      <div class="modal-content">
+        <div class="input-group">
+          <label class="input-label">آدرس لینک دانلود (URL)</label>
+          <input type="text" class="input-text" id="txtUrl" value="https://download.jetbrains.com/webstorm/WebStorm-2024.3.exe">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">تعداد کانکشن‌های همزمان (Threads)</label>
+          <div class="thread-select-row">
+            <div class="thread-opt">۴ کانکشن</div>
+            <div class="thread-opt">۸ کانکشن</div>
+            <div class="thread-opt active">۱۶ توربو</div>
+            <div class="thread-opt">۳۲ هایپر</div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">مسیر ذخیره‌سازی در ویندوز</label>
+          <input type="text" class="input-text" value="C:\Users\V I S I O N\Downloads">
+        </div>
+      </div>
+
+      <div class="modal-bottom">
+        <button class="btn-pill" id="btnCancelModal">انصراف</button>
+        <button class="btn-new-task" id="btnConfirmDownload">
+          <span>شروع دانلود پرسرعت</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Settings -->
+  <div class="modal-overlay" id="modalSettings">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--cyan-neon);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          تنظیمات عمومی پروان دانلود منیجر
+        </div>
+        <div style="cursor: pointer;" id="btnCloseSettings">✕</div>
+      </div>
+
+      <div class="modal-content">
+        <div class="input-group">
+          <label class="input-label">مسیر پیش‌فرض پوشه دانلود (Download Directory)</label>
+          <input type="text" class="input-text" id="settingSaveDir" value="C:\Users\Downloads">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">تعداد کانکشن پیش‌فرض برای هر دانلود</label>
+          <select class="input-text" id="settingDefaultThreads" style="cursor: pointer;">
+            <option value="4">۴ کانکشن (سبک)</option>
+            <option value="8">۸ کانکشن (متعادل)</option>
+            <option value="16" selected>۱۶ کانکشن (توربو استاندارد)</option>
+            <option value="32">۳۲ کانکشن (حداکثر سرعت)</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">حالت پروکسی و شبکه</label>
+          <select class="input-text" id="settingProxyMode" style="cursor: pointer;">
+            <option value="auto">شناسایی خودکار پروکسی محلی (v2ray / Clash / Lantern)</option>
+            <option value="direct">اتصال مستقیم (بدون پروکسی)</option>
+            <option value="custom">پروکسی دستی اختصاصی</option>
+          </select>
+        </div>
+
+        <div class="input-group" id="groupCustomProxy" style="display: none;">
+          <label class="input-label">آدرس پروکسی دستی (مثلاً http://127.0.0.1:10808)</label>
+          <input type="text" class="input-text" id="settingCustomProxy" value="http://127.0.0.1:10808">
+        </div>
+      </div>
+
+      <div class="modal-bottom">
+        <button class="btn-pill" id="btnCancelSettings">انصراف</button>
+        <button class="btn-new-task" id="btnSaveSettings">
+          <span>ذخیره تنظیمات</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-time Animation & Logic -->
+  <script>
+    // Sound Synthesizer Effects
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 650, duration = 0.05) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Dual Streaming Chart (Download Speed + Incoming Bandwidth)
+    const canvas = document.getElementById('dualSpeedChart');
+    const ctx = canvas.getContext('2d');
+
+    function fitCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight - 28;
+    }
+    window.addEventListener('resize', fitCanvas);
+    fitCanvas();
+
+    const points = 50;
+    const downloadHistory = new Array(points).fill(70);
+    const lineHistory = new Array(points).fill(80);
+
+    let curDownload = 72.4;
+    let curLineMbps = 610;
+
+    function drawChart() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const maxVal = 120;
+      const step = w / (points - 1);
+
+      // Line 1: Internet Line Bandwidth (Emerald)
+      ctx.beginPath();
+      for (let i = 0; i < points; i++) {
+        const x = i * step;
+        const y = h - (lineHistory[i] / maxVal) * (h * 0.85);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Line 2: Net Download Speed (Cyan Neon with Area Gradient)
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let i = 0; i < points; i++) {
+        const x = i * step;
+        const y = h - (downloadHistory[i] / maxVal) * (h * 0.85);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(0, 245, 255, 0.35)');
+      grad.addColorStop(1, 'rgba(0, 245, 255, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.beginPath();
+      for (let i = 0; i < points; i++) {
+        const x = i * step;
+        const y = h - (downloadHistory[i] / maxVal) * (h * 0.85);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#00F5FF';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(0, 245, 255, 0.8)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Backend Communication Bridge
+    const API_BASE = 'http://127.0.0.1:9876/api';
+
+    let peakSpeed = 0;
+    let allTasksCache = [];
+    let currentTab = 'all';
+    let currentCategory = null;
+    let searchKeyword = '';
+
+    // Window Controls
+    document.querySelector('.win-close').onclick = () => {
+      playBeep(400, 0.08);
+      window.close();
+    };
+    document.querySelector('.win-min').onclick = () => {
+      playBeep(500, 0.05);
+    };
+    document.querySelector('.win-max').onclick = () => {
+      playBeep(700, 0.05);
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      } else {
+        document.exitFullscreen().catch(()=>{});
+      }
+    };
+
+    // Sidebar Filters
+    document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
+      link.onclick = () => {
+        document.querySelectorAll('.nav-link[data-tab]').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-link[data-cat]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        currentTab = link.getAttribute('data-tab');
+        currentCategory = null;
+        playBeep(800, 0.04);
+        filterAndRender();
+      };
+    });
+
+    document.querySelectorAll('.nav-link[data-cat]').forEach(link => {
+      link.onclick = () => {
+        document.querySelectorAll('.nav-link[data-tab]').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-link[data-cat]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        currentCategory = link.getAttribute('data-cat');
+        currentTab = 'all';
+        playBeep(800, 0.04);
+        filterAndRender();
+      };
+    });
+
+    // Real-Time Search Bar
+    const inputSearch = document.getElementById('inputSearch');
+    inputSearch.oninput = (e) => {
+      searchKeyword = e.target.value.toLowerCase().trim();
+      filterAndRender();
+    };
+
+    async function fetchTelemetry() {
+      try {
+        let data;
+        if (window.pywebview && window.pywebview.api) {
+          data = await window.pywebview.api.get_telemetry();
+        } else {
+          const res = await fetch(`${API_BASE}/telemetry`, { cache: 'no-store' });
+          if (!res.ok) throw new Error('API offline');
+          data = await res.json();
+        }
+        updateUIWithTelemetry(data);
+      } catch (e) {
+        curDownload = 0;
+        curLineMbps = 0;
+        document.getElementById('speedVal').textContent = "0.0";
+        document.getElementById('bandwidthVal').textContent = "0";
+        downloadHistory.shift();
+        downloadHistory.push(0);
+        lineHistory.shift();
+        lineHistory.push(0);
+        drawChart();
+      }
+    }
+
+    function updateUIWithTelemetry(data) {
+      curDownload = data.aggregate_speed_mb || 0;
+      curLineMbps = data.incoming_line_mbps || 0;
+      peakSpeed = Math.max(peakSpeed, curDownload);
+
+      document.getElementById('speedVal').textContent = curDownload.toFixed(1);
+      document.getElementById('bandwidthVal').textContent = curLineMbps;
+      document.getElementById('countActive').textContent = data.active_tasks_count;
+      document.getElementById('totalQueueSizeLabel').textContent = data.total_queue_fmt || '0 B';
+      document.getElementById('activeConnectionsLabel').textContent = `کانکشن فعال: ${data.active_tasks_count * 16}`;
+      document.getElementById('peakSpeedLabel').textContent = `اوج سرعت: ${peakSpeed.toFixed(1)} MB/s`;
+
+      downloadHistory.shift();
+      downloadHistory.push(curDownload);
+
+      lineHistory.shift();
+      lineHistory.push(curLineMbps > 0 ? (curLineMbps / 8) : 0);
+
+      drawChart();
+
+      allTasksCache = data.tasks || [];
+      updateSidebarBadges(allTasksCache);
+      filterAndRender();
+    }
+
+    function updateSidebarBadges(tasks) {
+      const allCount = tasks.length;
+      const downloadingCount = tasks.filter(t => t.status === 'downloading' || t.status === 'paused').length;
+      const completedCount = tasks.filter(t => t.status === 'completed').length;
+      const scheduledCount = tasks.filter(t => t.status === 'queued').length;
+      const appCount = tasks.filter(t => t.category === 'app').length;
+      const isoCount = tasks.filter(t => t.category === 'iso').length;
+      const archiveCount = tasks.filter(t => t.category === 'archive').length;
+
+      document.getElementById('countAll').textContent = allCount;
+      document.getElementById('countActive').textContent = downloadingCount;
+      document.getElementById('countCompleted').textContent = completedCount;
+      document.getElementById('countScheduled').textContent = scheduledCount;
+      document.getElementById('countApp').textContent = appCount;
+      document.getElementById('countIso').textContent = isoCount;
+      document.getElementById('countArchive').textContent = archiveCount;
+    }
+
+    function filterAndRender() {
+      let filtered = allTasksCache.slice();
+
+      if (currentTab === 'downloading') {
+        filtered = filtered.filter(t => t.status === 'downloading' || t.status === 'paused');
+      } else if (currentTab === 'completed') {
+        filtered = filtered.filter(t => t.status === 'completed');
+      } else if (currentTab === 'scheduled') {
+        filtered = filtered.filter(t => t.status === 'queued');
+      }
+
+      if (currentCategory) {
+        filtered = filtered.filter(t => t.category === currentCategory);
+      }
+
+      if (searchKeyword) {
+        filtered = filtered.filter(t => 
+          (t.filename && t.filename.toLowerCase().includes(searchKeyword)) ||
+          (t.url && t.url.toLowerCase().includes(searchKeyword))
+        );
+      }
+
+      renderTasks(filtered);
+    }
+
+    function renderTasks(tasks) {
+      const queueList = document.getElementById('queueList');
+      
+      if (!tasks || tasks.length === 0) {
+        queueList.innerHTML = `
+          <div style="text-align: center; padding: 70px 20px; color: var(--text-muted);">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 14px; opacity: 0.4; color: var(--cyan-neon);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-main);">صف دانلود خالی است</div>
+            <div style="font-size: 0.86rem; color: var(--text-dim); margin-bottom: 18px;">هیچ فایلی برای نمایش وجود ندارد.</div>
+            <button class="btn-new-task" onclick="document.getElementById('btnOpenModal').click();" style="display: inline-flex; margin: 0 auto; padding: 8px 18px; font-size: 0.85rem;">
+              + افزودن لینک دانلود
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const ph = document.getElementById('queuePlaceholder');
+      if (ph) ph.remove();
+
+      const taskIds = new Set(tasks.map(t => `task-${t.id}`));
+      Array.from(queueList.children).forEach(child => {
+        if (child.id && child.id.startsWith('task-') && !taskIds.has(child.id)) {
+          child.remove();
+        }
+      });
+
+      tasks.forEach(t => {
+        let card = document.getElementById(`task-${t.id}`);
+        if (!card) {
+          card = document.createElement('div');
+          card.id = `task-${t.id}`;
+          queueList.appendChild(card);
+        }
+
+        const isDownloading = t.status === 'downloading';
+        const isPaused = t.status === 'paused';
+        const isDone = t.status === 'completed';
+        card.className = `task-card ${isDownloading ? 'active-state' : ''}`;
+
+        const iconType = (t.category || 'APP').toUpperCase();
+        const iconClass = t.category === 'app' ? 'icon-app' : (t.category === 'iso' ? 'icon-iso' : 'icon-zip');
+        const doneChunks = t.chunks ? t.chunks.filter(c => c.status === 'done').length : (isDone ? t.num_threads : 0);
+
+        card.innerHTML = `
+          <div class="task-top-row">
+            <div class="task-file-meta">
+              <div class="task-icon ${iconClass}">${iconType}</div>
+              <div class="task-name-col">
+                <div class="task-filename" title="${t.filename}">${t.filename}</div>
+                <div class="task-meta-stats">
+                  <span class="stat-pill" style="color: ${isDownloading ? 'var(--cyan-neon)' : (isDone ? 'var(--emerald-neon)' : 'var(--amber-neon)')};">
+                    ⚡ <span class="task-spd">${isDownloading ? t.speed_fmt : (isDone ? 'تکمیل شد' : (isPaused ? 'متوقف شده' : t.status))}</span>
+                  </span>
+                  <span>•</span>
+                  <span class="stat-pill" style="color: var(--text-main);">
+                    📦 حجم اپ: <strong>${t.downloaded_bytes_fmt}</strong> از <strong>${t.total_size_fmt}</strong> (${t.progress_percent}%)
+                  </span>
+                  <span>•</span>
+                  <span class="stat-pill" style="color: var(--emerald-neon);">
+                    زمان باقیمانده: ${isDone ? 'پایان' : t.eta_fmt}
+                  </span>
+                  <span>•</span>
+                  <span style="color: var(--text-muted);">${t.num_threads} کانکشن فعال</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="task-controls">
+              ${!isDone ? `
+                <button class="btn-circle btn-task-toggle" data-id="${t.id}" data-status="${t.status}" title="${isDownloading ? 'توقف موقت' : 'ادامه دانلود'}">
+                  ${isDownloading ? 
+                    '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>' : 
+                    '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>'
+                  }
+                </button>
+              ` : `
+                <button class="btn-circle btn-task-folder" data-id="${t.id}" title="نمایش در پوشه ویندوز" style="color: var(--emerald-neon);">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+              `}
+              <button class="btn-circle btn-task-folder" data-id="${t.id}" title="باز کردن پوشه فایل">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </button>
+              <button class="btn-circle danger btn-task-delete" data-id="${t.id}" title="حذف تسک">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="matrix-box">
+            <div class="matrix-header">
+              <span>ماتریس قطعات همزمان (MULTI-THREAD CHUNKS)</span>
+              <span>${doneChunks} / ${t.num_threads} CONNECTIONS</span>
+            </div>
+            <div class="matrix-grid">
+              ${(t.chunks && t.chunks.length > 0) ? t.chunks.map(c => `
+                <div class="thread-block ${c.status === 'done' ? 'done' : (c.status === 'active' ? 'active' : '')}"></div>
+              `).join('') : `
+                <div class="thread-block ${isDone ? 'done' : ''}"></div><div class="thread-block ${isDone ? 'done' : ''}"></div>
+                <div class="thread-block ${isDone ? 'done' : ''}"></div><div class="thread-block ${isDone ? 'done' : ''}"></div>
+              `}
+            </div>
+          </div>
+        `;
+      });
+
+      // Bind dynamic buttons on each card
+      document.querySelectorAll('.btn-task-toggle').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          const st = btn.getAttribute('data-status');
+          playBeep(750, 0.05);
+          if (st === 'downloading') {
+            await fetch(`${API_BASE}/pause`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: id })
+            }).catch(()=>{});
+          } else {
+            await fetch(`${API_BASE}/resume`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: id })
+            }).catch(()=>{});
+          }
+          fetchTelemetry();
+        };
+      });
+
+      document.querySelectorAll('.btn-task-folder').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          playBeep(650, 0.05);
+          await fetch(`${API_BASE}/open_folder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: id })
+          }).catch(()=>{});
+        };
+      });
+
+      document.querySelectorAll('.btn-task-delete').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          if (!confirm('آیا مطمئن هستید که می‌خواهید این دانلود را حذف کنید؟')) return;
+          playBeep(350, 0.08);
+          await fetch(`${API_BASE}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: id, remove_file: false })
+          }).catch(()=>{});
+          const el = document.getElementById(`task-${id}`);
+          if (el) el.remove();
+          fetchTelemetry();
+        };
+      });
+    }
+
+    // Connect Toolbar Buttons
+    document.getElementById('btnStartAll').onclick = async () => {
+      playBeep(850, 0.06);
+      await fetch(`${API_BASE}/resume_all`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
+
+    document.getElementById('btnPauseAll').onclick = async () => {
+      playBeep(450, 0.06);
+      await fetch(`${API_BASE}/pause_all`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
+
+    document.getElementById('btnClearCompleted').onclick = async () => {
+      playBeep(400, 0.07);
+      await fetch(`${API_BASE}/clear_completed`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
+
+    // Polling interval
+    setInterval(fetchTelemetry, 500);
+
+    // Modal Interaction
+    const modal = document.getElementById('modalTask');
+    let selectedThreads = 16;
+
+    document.getElementById('btnOpenModal').addEventListener('click', async () => {
+      modal.classList.add('show');
+      playBeep(700, 0.06);
+      try {
+        const res = await fetch(`${API_BASE}/clipboard`);
+        const data = await res.json();
+        if (data.has_url && data.url) {
+          document.getElementById('txtUrl').value = data.url;
+        }
+      } catch(e) {}
+      setTimeout(() => document.getElementById('txtUrl').select(), 100);
+    });
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      modal.classList.remove('show');
+      playBeep(450, 0.05);
+    });
+    document.getElementById('btnCancelModal').addEventListener('click', () => {
+      modal.classList.remove('show');
+      playBeep(450, 0.05);
+    });
+
+    document.querySelectorAll('.thread-opt').forEach((opt, idx) => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.thread-opt').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        const threadCounts = [4, 8, 16, 32];
+        selectedThreads = threadCounts[idx] || 16;
+        playBeep(850, 0.04);
+      });
+    });
+
+    document.getElementById('btnConfirmDownload').addEventListener('click', async () => {
+      const url = document.getElementById('txtUrl').value.trim();
+      if (!url) return;
+      playBeep(950, 0.1);
+
+      try {
+        await fetch(`${API_BASE}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url, threads: selectedThreads })
+        });
+      } catch (e) {
+        console.log('Added offline or simulating');
+      }
+
+      modal.classList.remove('show');
+      fetchTelemetry();
+    });
+
+    // Limiter
+    const rangeLimiter = document.getElementById('rangeLimiter');
+    const txtLimit = document.getElementById('txtLimit');
+    rangeLimiter.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      if (v >= 150) {
+        txtLimit.textContent = 'نامحدود';
+        txtLimit.style.color = 'var(--cyan-neon)';
+      } else {
+        txtLimit.textContent = v + ' MB/s';
+        txtLimit.style.color = 'var(--amber-neon)';
+      }
+      fetch(`${API_BASE}/limiter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: v })
+      }).catch(()=>{});
+    });
+
+    // Settings Modal
+    const modalSettings = document.getElementById('modalSettings');
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const btnCancelSettings = document.getElementById('btnCancelSettings');
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+    const settingProxyMode = document.getElementById('settingProxyMode');
+    const groupCustomProxy = document.getElementById('groupCustomProxy');
+
+    btnOpenSettings.onclick = async () => {
+      playBeep(700, 0.05);
+      modalSettings.classList.add('show');
+      try {
+        const res = await fetch(`${API_BASE}/settings`);
+        const cfg = await res.json();
+        document.getElementById('settingSaveDir').value = cfg.save_directory || '';
+        document.getElementById('settingDefaultThreads').value = cfg.default_threads || 16;
+        settingProxyMode.value = cfg.proxy_mode || 'auto';
+        document.getElementById('settingCustomProxy').value = cfg.custom_proxy || '';
+        groupCustomProxy.style.display = cfg.proxy_mode === 'custom' ? 'flex' : 'none';
+      } catch(e) {}
+    };
+
+    btnCloseSettings.onclick = () => modalSettings.classList.remove('show');
+    btnCancelSettings.onclick = () => modalSettings.classList.remove('show');
+
+    settingProxyMode.onchange = () => {
+      groupCustomProxy.style.display = settingProxyMode.value === 'custom' ? 'flex' : 'none';
+    };
+
+    btnSaveSettings.onclick = async () => {
+      playBeep(900, 0.08);
+      const newCfg = {
+        save_directory: document.getElementById('settingSaveDir').value.trim(),
+        default_threads: parseInt(document.getElementById('settingDefaultThreads').value),
+        proxy_mode: settingProxyMode.value,
+        custom_proxy: document.getElementById('settingCustomProxy').value.trim()
+      };
+      await fetch(`${API_BASE}/settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCfg)
+      }).catch(()=>{});
+      modalSettings.classList.remove('show');
+      fetchTelemetry();
+    };
+
+    // Keyboard shortcut (Ctrl + N or Ctrl + K for new download)
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'k' || e.key.toLowerCase() === 'n')) {
+        e.preventDefault();
+        modal.classList.add('show');
+        playBeep(700, 0.06);
+      }
+    });
+  </script>
+</body>
+</html>

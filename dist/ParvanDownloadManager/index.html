@@ -847,32 +847,41 @@
       <div>
         <div class="nav-section-title">صف‌های دانلود</div>
         <ul class="nav-list">
-          <li class="nav-link active">
+          <li class="nav-link active" data-tab="all">
+            <div class="nav-link-right">
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span>همه دانلودها</span>
+            </div>
+            <span class="badge-count" id="countAll">۰</span>
+          </li>
+          <li class="nav-link" data-tab="downloading">
             <div class="nav-link-right">
               <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               <span>در حال دانلود</span>
             </div>
-            <span class="badge-count" id="countActive">3</span>
+            <span class="badge-count" id="countActive">۰</span>
           </li>
-          <li class="nav-link">
+          <li class="nav-link" data-tab="completed">
             <div class="nav-link-right">
               <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
               <span>تکمیل شده‌ها</span>
             </div>
-            <span class="badge-count">19</span>
+            <span class="badge-count" id="countCompleted">۰</span>
           </li>
-          <li class="nav-link">
+          <li class="nav-link" data-tab="scheduled">
             <div class="nav-link-right">
               <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>زمان‌بندی شبانه</span>
             </div>
-            <span class="badge-count">2</span>
+            <span class="badge-count" id="countScheduled">۰</span>
           </li>
         </ul>
       </div>
@@ -880,26 +889,26 @@
       <div>
         <div class="nav-section-title">دسته‌بندی‌ها</div>
         <ul class="nav-list">
-          <li class="nav-link">
+          <li class="nav-link" data-cat="app">
             <div class="nav-link-right">
               <span style="color: var(--cyan-neon);">●</span>
               <span>برنامه‌ها و نصبی‌ها</span>
             </div>
-            <span class="badge-count">7</span>
+            <span class="badge-count" id="countApp">۰</span>
           </li>
-          <li class="nav-link">
+          <li class="nav-link" data-cat="iso">
             <div class="nav-link-right">
               <span style="color: var(--violet-neon);">●</span>
               <span>ایمیج‌ها و ISO</span>
             </div>
-            <span class="badge-count">4</span>
+            <span class="badge-count" id="countIso">۰</span>
           </li>
-          <li class="nav-link">
+          <li class="nav-link" data-cat="archive">
             <div class="nav-link-right">
               <span style="color: var(--amber-neon);">●</span>
               <span>فایل‌های فشرده (ZIP/RAR)</span>
             </div>
-            <span class="badge-count">10</span>
+            <span class="badge-count" id="countArchive">۰</span>
           </li>
         </ul>
       </div>
@@ -927,12 +936,12 @@
             <span>سرعت دانلود خالص (Net Speed)</span>
           </div>
           <div class="metric-value val-cyan">
-            <span id="speedVal">72.4</span>
+            <span id="speedVal">0.0</span>
             <span class="metric-unit">MB/s</span>
           </div>
           <div class="metric-sub">
-            <span>تعداد کانکشن‌ها: ۴۸ چانک</span>
-            <span style="color: var(--cyan-neon);">اوج: ۹۵.۱ MB/s</span>
+            <span id="activeConnectionsLabel">کانکشن فعال: ۰</span>
+            <span style="color: var(--cyan-neon);" id="peakSpeedLabel">اوج سرعت: ۰.۰ MB/s</span>
           </div>
         </div>
 
@@ -945,12 +954,12 @@
             <span>سرعت اینترنت ورودی خط (Bandwidth)</span>
           </div>
           <div class="metric-value val-emerald">
-            <span id="bandwidthVal">610</span>
+            <span id="bandwidthVal">0</span>
             <span class="metric-unit">Mbps</span>
           </div>
           <div class="metric-sub">
-            <span>راندمان خط ورودی: ۹۴٪</span>
-            <span style="color: var(--emerald-neon);">ظرفیت آزاد: ۳۸ Mbps</span>
+            <span id="lineStatusLabel">وضعیت خط: آماده</span>
+            <span style="color: var(--emerald-neon);" id="pingLabel">پینگ: ۱۸ms</span>
           </div>
         </div>
 
@@ -977,233 +986,45 @@
           <svg class="search-icon-pos" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input type="text" class="search-bar" placeholder="جستجو در دانلودها و اپلیکیشن‌ها...">
+          <input type="text" class="search-bar" id="inputSearch" placeholder="جستجو در نام فایل‌ها و لینک‌ها...">
         </div>
 
         <div class="toolbar-buttons">
-          <button class="btn-pill" id="btnStartAll">
+          <button class="btn-pill" id="btnStartAll" title="شروع یا ادامه تمام دانلودهای صف">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
             </svg>
             شروع همه
           </button>
-          <button class="btn-pill" id="btnPauseAll">
+          <button class="btn-pill" id="btnPauseAll" title="توقف موقت تمام دانلودها">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
             </svg>
             توقف همه
           </button>
+          <button class="btn-pill" id="btnClearCompleted" title="پاکسازی دانلودهای تکمیل شده از لیست">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            پاکسازی تکمیل‌شده‌ها
+          </button>
         </div>
 
         <!-- 3. حجم کل اپ‌های در حال دانلود -->
         <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
-          مجموع حجم دانلود صف: <span style="color: var(--cyan-neon); font-weight: 700;">۱۵.۸۵ گیگابایت</span>
+          مجموع حجم دانلود صف: <span style="color: var(--cyan-neon); font-weight: 700;" id="totalQueueSizeLabel">۰ گیگابایت</span>
         </div>
       </section>
 
-      <!-- Downloads List -->
+      <!-- Downloads List (Rendered dynamically from backend) -->
       <section class="queue-scroll" id="queueList">
-        
-        <!-- Item 1: Visual Studio Code Installer App -->
-        <div class="task-card active-state">
-          <div class="task-top-row">
-            <div class="task-file-meta">
-              <div class="task-icon icon-app">APP</div>
-              <div class="task-name-col">
-                <div class="task-filename">VSCode-Setup-x64-1.95.2.exe</div>
-                <div class="task-meta-stats">
-                  <!-- سرعت دانلود این تسک -->
-                  <span class="stat-pill" style="color: var(--cyan-neon);">
-                    ⚡ <span class="task-spd">38.5 MB/s</span>
-                  </span>
-                  <span>•</span>
-                  <!-- حجم اپ دانلودی -->
-                  <span class="stat-pill" style="color: var(--text-main);">
-                    📦 حجم اپ: <strong>102 MB</strong> از <strong>115 MB</strong> (88%)
-                  </span>
-                  <span>•</span>
-                  <span class="stat-pill" style="color: var(--emerald-neon);">
-                    زمان باقیمانده: کمتر از ۱ ثانیه
-                  </span>
-                  <span>•</span>
-                  <span style="color: var(--text-muted);">۱۶ کانکشن فعال</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="task-controls">
-              <button class="btn-circle" title="توقف / ادامه">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
-                </svg>
-              </button>
-              <button class="btn-circle danger" title="حذف تسک">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Multi-thread segment matrix -->
-          <div class="matrix-box">
-            <div class="matrix-header">
-              <span>ماتریس قطعات همزمان (MULTI-THREAD CHUNKS)</span>
-              <span>16 / 16 CONNECTIONS</span>
-            </div>
-            <div class="matrix-grid">
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block"></div>
-            </div>
-          </div>
+        <div id="queuePlaceholder" style="text-align: center; padding: 70px 20px; color: var(--text-muted);">
+          <svg width="44" height="44" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 12px; opacity: 0.5; color: var(--cyan-neon);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <div style="font-size: 1rem; font-weight: 600; margin-bottom: 6px;">در حال بارگذاری لیست دانلودها...</div>
+          <div style="font-size: 0.82rem; color: var(--text-dim);">برای افزودن دانلود جدید، روی دکمه «دانلود جدید» کلیک کنید.</div>
         </div>
-
-        <!-- Item 2: Ubuntu Linux Desktop ISO -->
-        <div class="task-card active-state">
-          <div class="task-top-row">
-            <div class="task-file-meta">
-              <div class="task-icon icon-iso">ISO</div>
-              <div class="task-name-col">
-                <div class="task-filename">ubuntu-24.04.1-desktop-amd64.iso</div>
-                <div class="task-meta-stats">
-                  <span class="stat-pill" style="color: var(--cyan-neon);">
-                    ⚡ <span class="task-spd">24.2 MB/s</span>
-                  </span>
-                  <span>•</span>
-                  <!-- حجم کل و دانلود شده -->
-                  <span class="stat-pill" style="color: var(--text-main);">
-                    📦 حجم کل: <strong>2.85 GB</strong> از <strong>5.80 GB</strong> (49%)
-                  </span>
-                  <span>•</span>
-                  <span class="stat-pill" style="color: var(--emerald-neon);">
-                    زمان باقیمانده: ۱ دقیقه و ۵۵ ثانیه
-                  </span>
-                  <span>•</span>
-                  <span style="color: var(--text-muted);">۱۶ کانکشن فعال</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="task-controls">
-              <button class="btn-circle" title="توقف / ادامه">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
-                </svg>
-              </button>
-              <button class="btn-circle danger" title="حذف تسک">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="matrix-box">
-            <div class="matrix-header">
-              <span>ماتریس قطعات همزمان (MULTI-THREAD CHUNKS)</span>
-              <span>16 / 16 CONNECTIONS</span>
-            </div>
-            <div class="matrix-grid">
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Item 3: Node.js Enterprise App Package -->
-        <div class="task-card active-state">
-          <div class="task-top-row">
-            <div class="task-file-meta">
-              <div class="task-icon icon-zip">PKG</div>
-              <div class="task-name-col">
-                <div class="task-filename">docker-desktop-installer-4.35.exe</div>
-                <div class="task-meta-stats">
-                  <span class="stat-pill" style="color: var(--cyan-neon);">
-                    ⚡ <span class="task-spd">9.7 MB/s</span>
-                  </span>
-                  <span>•</span>
-                  <!-- حجم اپلیکیشن -->
-                  <span class="stat-pill" style="color: var(--text-main);">
-                    📦 حجم اپ: <strong>490 MB</strong> از <strong>620 MB</strong> (79%)
-                  </span>
-                  <span>•</span>
-                  <span class="stat-pill" style="color: var(--emerald-neon);">
-                    زمان باقیمانده: ۱۳ ثانیه
-                  </span>
-                  <span>•</span>
-                  <span style="color: var(--text-muted);">۱۶ کانکشن فعال</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="task-controls">
-              <button class="btn-circle" title="توقف / ادامه">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
-                </svg>
-              </button>
-              <button class="btn-circle danger" title="حذف تسک">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="matrix-box">
-            <div class="matrix-header">
-              <span>ماتریس قطعات همزمان (MULTI-THREAD CHUNKS)</span>
-              <span>16 / 16 CONNECTIONS</span>
-            </div>
-            <div class="matrix-grid">
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block done"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block active"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-              <div class="thread-block"></div>
-            </div>
-          </div>
-        </div>
-
       </section>
     </main>
   </div>
@@ -1398,6 +1219,61 @@
     // Backend Communication Bridge
     const API_BASE = 'http://127.0.0.1:9876/api';
 
+    let peakSpeed = 0;
+    let allTasksCache = [];
+    let currentTab = 'all';
+    let currentCategory = null;
+    let searchKeyword = '';
+
+    // Window Controls
+    document.querySelector('.win-close').onclick = () => {
+      playBeep(400, 0.08);
+      window.close();
+    };
+    document.querySelector('.win-min').onclick = () => {
+      playBeep(500, 0.05);
+    };
+    document.querySelector('.win-max').onclick = () => {
+      playBeep(700, 0.05);
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(()=>{});
+      } else {
+        document.exitFullscreen().catch(()=>{});
+      }
+    };
+
+    // Sidebar Filters
+    document.querySelectorAll('.nav-link[data-tab]').forEach(link => {
+      link.onclick = () => {
+        document.querySelectorAll('.nav-link[data-tab]').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-link[data-cat]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        currentTab = link.getAttribute('data-tab');
+        currentCategory = null;
+        playBeep(800, 0.04);
+        filterAndRender();
+      };
+    });
+
+    document.querySelectorAll('.nav-link[data-cat]').forEach(link => {
+      link.onclick = () => {
+        document.querySelectorAll('.nav-link[data-tab]').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-link[data-cat]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        currentCategory = link.getAttribute('data-cat');
+        currentTab = 'all';
+        playBeep(800, 0.04);
+        filterAndRender();
+      };
+    });
+
+    // Real-Time Search Bar
+    const inputSearch = document.getElementById('inputSearch');
+    inputSearch.oninput = (e) => {
+      searchKeyword = e.target.value.toLowerCase().trim();
+      filterAndRender();
+    };
+
     async function fetchTelemetry() {
       try {
         let data;
@@ -1410,77 +1286,141 @@
         }
         updateUIWithTelemetry(data);
       } catch (e) {
-        // Fallback simulation when backend server is starting or standalone preview
-        simulateTelemetry();
+        curDownload = 0;
+        curLineMbps = 0;
+        document.getElementById('speedVal').textContent = "0.0";
+        document.getElementById('bandwidthVal').textContent = "0";
+        downloadHistory.shift();
+        downloadHistory.push(0);
+        lineHistory.shift();
+        lineHistory.push(0);
+        drawChart();
       }
     }
 
     function updateUIWithTelemetry(data) {
       curDownload = data.aggregate_speed_mb || 0;
       curLineMbps = data.incoming_line_mbps || 0;
+      peakSpeed = Math.max(peakSpeed, curDownload);
 
       document.getElementById('speedVal').textContent = curDownload.toFixed(1);
       document.getElementById('bandwidthVal').textContent = curLineMbps;
       document.getElementById('countActive').textContent = data.active_tasks_count;
+      document.getElementById('totalQueueSizeLabel').textContent = data.total_queue_fmt || '0 B';
+      document.getElementById('activeConnectionsLabel').textContent = `کانکشن فعال: ${data.active_tasks_count * 16}`;
+      document.getElementById('peakSpeedLabel').textContent = `اوج سرعت: ${peakSpeed.toFixed(1)} MB/s`;
 
       downloadHistory.shift();
       downloadHistory.push(curDownload);
 
       lineHistory.shift();
-      lineHistory.push(curDownload * 1.15 + 10);
+      lineHistory.push(curLineMbps > 0 ? (curLineMbps / 8) : 0);
 
       drawChart();
 
-      // Render tasks if present
-      if (data.tasks && data.tasks.length > 0) {
-        renderTasks(data.tasks);
-      }
+      allTasksCache = data.tasks || [];
+      updateSidebarBadges(allTasksCache);
+      filterAndRender();
     }
 
-    function simulateTelemetry() {
-      curDownload += (Math.random() * 8 - 4);
-      if (curDownload < 55) curDownload = 58;
-      if (curDownload > 95) curDownload = 90;
+    function updateSidebarBadges(tasks) {
+      const allCount = tasks.length;
+      const downloadingCount = tasks.filter(t => t.status === 'downloading' || t.status === 'paused').length;
+      const completedCount = tasks.filter(t => t.status === 'completed').length;
+      const scheduledCount = tasks.filter(t => t.status === 'queued').length;
+      const appCount = tasks.filter(t => t.category === 'app').length;
+      const isoCount = tasks.filter(t => t.category === 'iso').length;
+      const archiveCount = tasks.filter(t => t.category === 'archive').length;
 
-      curLineMbps = Math.round(curDownload * 8.35 + (Math.random() * 20 - 10));
+      document.getElementById('countAll').textContent = allCount;
+      document.getElementById('countActive').textContent = downloadingCount;
+      document.getElementById('countCompleted').textContent = completedCount;
+      document.getElementById('countScheduled').textContent = scheduledCount;
+      document.getElementById('countApp').textContent = appCount;
+      document.getElementById('countIso').textContent = isoCount;
+      document.getElementById('countArchive').textContent = archiveCount;
+    }
 
-      downloadHistory.shift();
-      downloadHistory.push(curDownload);
+    function filterAndRender() {
+      let filtered = allTasksCache.slice();
 
-      lineHistory.shift();
-      lineHistory.push(curDownload * 1.1);
+      if (currentTab === 'downloading') {
+        filtered = filtered.filter(t => t.status === 'downloading' || t.status === 'paused');
+      } else if (currentTab === 'completed') {
+        filtered = filtered.filter(t => t.status === 'completed');
+      } else if (currentTab === 'scheduled') {
+        filtered = filtered.filter(t => t.status === 'queued');
+      }
 
-      document.getElementById('speedVal').textContent = curDownload.toFixed(1);
-      document.getElementById('bandwidthVal').textContent = curLineMbps;
+      if (currentCategory) {
+        filtered = filtered.filter(t => t.category === currentCategory);
+      }
 
-      drawChart();
+      if (searchKeyword) {
+        filtered = filtered.filter(t => 
+          (t.filename && t.filename.toLowerCase().includes(searchKeyword)) ||
+          (t.url && t.url.toLowerCase().includes(searchKeyword))
+        );
+      }
+
+      renderTasks(filtered);
     }
 
     function renderTasks(tasks) {
       const queueList = document.getElementById('queueList');
-      // Keep rendered cards updated without jumping
+      
+      if (!tasks || tasks.length === 0) {
+        queueList.innerHTML = `
+          <div style="text-align: center; padding: 70px 20px; color: var(--text-muted);">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-bottom: 14px; opacity: 0.4; color: var(--cyan-neon);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-main);">صف دانلود خالی است</div>
+            <div style="font-size: 0.86rem; color: var(--text-dim); margin-bottom: 18px;">هیچ فایلی برای نمایش وجود ندارد.</div>
+            <button class="btn-new-task" onclick="document.getElementById('btnOpenModal').click();" style="display: inline-flex; margin: 0 auto; padding: 8px 18px; font-size: 0.85rem;">
+              + افزودن لینک دانلود
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const ph = document.getElementById('queuePlaceholder');
+      if (ph) ph.remove();
+
+      const taskIds = new Set(tasks.map(t => `task-${t.id}`));
+      Array.from(queueList.children).forEach(child => {
+        if (child.id && child.id.startsWith('task-') && !taskIds.has(child.id)) {
+          child.remove();
+        }
+      });
+
       tasks.forEach(t => {
         let card = document.getElementById(`task-${t.id}`);
         if (!card) {
           card = document.createElement('div');
           card.id = `task-${t.id}`;
-          card.className = `task-card ${t.status === 'downloading' ? 'active-state' : ''}`;
           queueList.appendChild(card);
         }
 
-        const iconType = t.category.toUpperCase();
-        const iconClass = t.category === 'app' ? 'icon-app' : (t.category === 'iso' ? 'icon-iso' : 'icon-zip');
+        const isDownloading = t.status === 'downloading';
         const isPaused = t.status === 'paused';
+        const isDone = t.status === 'completed';
+        card.className = `task-card ${isDownloading ? 'active-state' : ''}`;
+
+        const iconType = (t.category || 'APP').toUpperCase();
+        const iconClass = t.category === 'app' ? 'icon-app' : (t.category === 'iso' ? 'icon-iso' : 'icon-zip');
+        const doneChunks = t.chunks ? t.chunks.filter(c => c.status === 'done').length : (isDone ? t.num_threads : 0);
 
         card.innerHTML = `
           <div class="task-top-row">
             <div class="task-file-meta">
               <div class="task-icon ${iconClass}">${iconType}</div>
               <div class="task-name-col">
-                <div class="task-filename">${t.filename}</div>
+                <div class="task-filename" title="${t.filename}">${t.filename}</div>
                 <div class="task-meta-stats">
-                  <span class="stat-pill" style="color: var(--cyan-neon);">
-                    ⚡ <span class="task-spd">${isPaused ? 'متوقف' : t.speed_fmt}</span>
+                  <span class="stat-pill" style="color: ${isDownloading ? 'var(--cyan-neon)' : (isDone ? 'var(--emerald-neon)' : 'var(--amber-neon)')};">
+                    ⚡ <span class="task-spd">${isDownloading ? t.speed_fmt : (isDone ? 'تکمیل شد' : (isPaused ? 'متوقف شده' : t.status))}</span>
                   </span>
                   <span>•</span>
                   <span class="stat-pill" style="color: var(--text-main);">
@@ -1488,7 +1428,7 @@
                   </span>
                   <span>•</span>
                   <span class="stat-pill" style="color: var(--emerald-neon);">
-                    زمان باقیمانده: ${t.eta_fmt}
+                    زمان باقیمانده: ${isDone ? 'پایان' : t.eta_fmt}
                   </span>
                   <span>•</span>
                   <span style="color: var(--text-muted);">${t.num_threads} کانکشن فعال</span>
@@ -1497,11 +1437,24 @@
             </div>
 
             <div class="task-controls">
-              <button class="btn-circle btn-task-toggle" data-id="${t.id}" data-status="${t.status}" title="${isPaused ? 'ادامه دانلود' : 'توقف موقت'}">
-                ${isPaused ? 
-                  '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>' : 
-                  '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>'
-                }
+              ${!isDone ? `
+                <button class="btn-circle btn-task-toggle" data-id="${t.id}" data-status="${t.status}" title="${isDownloading ? 'توقف موقت' : 'ادامه دانلود'}">
+                  ${isDownloading ? 
+                    '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>' : 
+                    '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>'
+                  }
+                </button>
+              ` : `
+                <button class="btn-circle btn-task-folder" data-id="${t.id}" title="نمایش در پوشه ویندوز" style="color: var(--emerald-neon);">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                  </svg>
+                </button>
+              `}
+              <button class="btn-circle btn-task-folder" data-id="${t.id}" title="باز کردن پوشه فایل">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
               </button>
               <button class="btn-circle danger btn-task-delete" data-id="${t.id}" title="حذف تسک">
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1514,47 +1467,93 @@
           <div class="matrix-box">
             <div class="matrix-header">
               <span>ماتریس قطعات همزمان (MULTI-THREAD CHUNKS)</span>
-              <span>${t.chunks ? t.chunks.filter(c => c.status === 'done').length : 0} / ${t.num_threads} CONNECTIONS</span>
+              <span>${doneChunks} / ${t.num_threads} CONNECTIONS</span>
             </div>
             <div class="matrix-grid">
               ${(t.chunks && t.chunks.length > 0) ? t.chunks.map(c => `
                 <div class="thread-block ${c.status === 'done' ? 'done' : (c.status === 'active' ? 'active' : '')}"></div>
               `).join('') : `
-                <div class="thread-block done"></div><div class="thread-block done"></div>
-                <div class="thread-block done"></div><div class="thread-block active"></div>
-                <div class="thread-block active"></div><div class="thread-block"></div>
+                <div class="thread-block ${isDone ? 'done' : ''}"></div><div class="thread-block ${isDone ? 'done' : ''}"></div>
+                <div class="thread-block ${isDone ? 'done' : ''}"></div><div class="thread-block ${isDone ? 'done' : ''}"></div>
               `}
             </div>
           </div>
         `;
       });
 
-      // Bind dynamic buttons
+      // Bind dynamic buttons on each card
       document.querySelectorAll('.btn-task-toggle').forEach(btn => {
-        btn.onclick = async () => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
           const id = btn.getAttribute('data-id');
           const st = btn.getAttribute('data-status');
           playBeep(750, 0.05);
           if (st === 'downloading') {
-            await fetch(`${API_BASE}/pause`, { method: 'POST', body: JSON.stringify({ task_id: id }) }).catch(()=>{});
+            await fetch(`${API_BASE}/pause`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: id })
+            }).catch(()=>{});
           } else {
-            await fetch(`${API_BASE}/resume`, { method: 'POST', body: JSON.stringify({ task_id: id }) }).catch(()=>{});
+            await fetch(`${API_BASE}/resume`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: id })
+            }).catch(()=>{});
           }
           fetchTelemetry();
         };
       });
 
-      document.querySelectorAll('.btn-task-delete').forEach(btn => {
-        btn.onclick = async () => {
+      document.querySelectorAll('.btn-task-folder').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
           const id = btn.getAttribute('data-id');
+          playBeep(650, 0.05);
+          await fetch(`${API_BASE}/open_folder`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: id })
+          }).catch(()=>{});
+        };
+      });
+
+      document.querySelectorAll('.btn-task-delete').forEach(btn => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          if (!confirm('آیا مطمئن هستید که می‌خواهید این دانلود را حذف کنید؟')) return;
           playBeep(350, 0.08);
-          await fetch(`${API_BASE}/delete`, { method: 'POST', body: JSON.stringify({ task_id: id }) }).catch(()=>{});
+          await fetch(`${API_BASE}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: id, remove_file: false })
+          }).catch(()=>{});
           const el = document.getElementById(`task-${id}`);
           if (el) el.remove();
           fetchTelemetry();
         };
       });
     }
+
+    // Connect Toolbar Buttons
+    document.getElementById('btnStartAll').onclick = async () => {
+      playBeep(850, 0.06);
+      await fetch(`${API_BASE}/resume_all`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
+
+    document.getElementById('btnPauseAll').onclick = async () => {
+      playBeep(450, 0.06);
+      await fetch(`${API_BASE}/pause_all`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
+
+    document.getElementById('btnClearCompleted').onclick = async () => {
+      playBeep(400, 0.07);
+      await fetch(`${API_BASE}/clear_completed`, { method: 'POST', headers: {'Content-Type': 'application/json'} }).catch(()=>{});
+      fetchTelemetry();
+    };
 
     // Polling interval
     setInterval(fetchTelemetry, 500);
@@ -1563,9 +1562,17 @@
     const modal = document.getElementById('modalTask');
     let selectedThreads = 16;
 
-    document.getElementById('btnOpenModal').addEventListener('click', () => {
+    document.getElementById('btnOpenModal').addEventListener('click', async () => {
       modal.classList.add('show');
       playBeep(700, 0.06);
+      try {
+        const res = await fetch(`${API_BASE}/clipboard`);
+        const data = await res.json();
+        if (data.has_url && data.url) {
+          document.getElementById('txtUrl').value = data.url;
+        }
+      } catch(e) {}
+      setTimeout(() => document.getElementById('txtUrl').select(), 100);
     });
     document.getElementById('btnCloseModal').addEventListener('click', () => {
       modal.classList.remove('show');

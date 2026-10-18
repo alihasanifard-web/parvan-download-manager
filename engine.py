@@ -260,7 +260,7 @@ class DownloadTask:
             self._executor.shutdown(wait=False)
 
     def resume(self):
-        if self.status == "paused" or self.status == "error":
+        if self.status in ("paused", "error", "queued"):
             self.start()
 
     def to_dict(self):

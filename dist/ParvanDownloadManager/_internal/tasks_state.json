@@ -1,0 +1,21 @@
+[
+  {
+    "id": "parvan-task-2",
+    "filename": "ubuntu-24.04.1-desktop-amd64.iso",
+    "url": "https://releases.ubuntu.com/24.04.1/ubuntu-24.04.1-desktop-amd64.iso",
+    "category": "iso",
+    "status": "paused",
+    "total_size": 6227702579,
+    "total_size_fmt": "5.8 GB",
+    "downloaded_bytes": 3060164198,
+    "downloaded_bytes_fmt": "2.85 GB",
+    "progress_percent": 49.1,
+    "speed_bps": 0,
+    "speed_fmt": "0.0 MB/s",
+    "eta_seconds": 0,
+    "eta_fmt": "0s",
+    "num_threads": 16,
+    "save_path": "C:\\Users\\V I S I O N\\Downloads\\ubuntu-24.04.1-desktop-amd64.iso",
+    "chunks": []
+  }
+]

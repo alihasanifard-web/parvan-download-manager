@@ -7,6 +7,19 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import urllib.parse
 from engine import engine
 
+def get_clipboard_url():
+    try:
+        import tkinter as tk
+        root = tk.Tk()
+        root.withdraw()
+        txt = root.clipboard_get().strip()
+        root.destroy()
+        if txt.startswith("http://") or txt.startswith("https://"):
+            return txt
+    except Exception:
+        pass
+    return ""
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class ParvanJsApi:
@@ -25,6 +38,20 @@ class ParvanJsApi:
 
     def delete_download(self, task_id, remove_file=False):
         return engine.delete_download(task_id, remove_file=remove_file)
+
+    def resume_all(self):
+        for t in engine.tasks.values():
+            if t.status == "paused" or t.status == "error":
+                t.resume()
+        engine.save_state()
+        return True
+
+    def pause_all(self):
+        for t in engine.tasks.values():
+            if t.status == "downloading":
+                t.pause()
+        engine.save_state()
+        return True
 
     def update_settings(self, new_cfg):
         return engine.update_settings(new_cfg)
@@ -66,6 +93,14 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             data = json.dumps(engine.config, ensure_ascii=False)
             self.wfile.write(data.encode('utf-8'))
             return
+        elif parsed.path == '/api/clipboard':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            clip = get_clipboard_url()
+            self.wfile.write(json.dumps({"has_url": bool(clip), "url": clip}).encode('utf-8'))
+            return
         super().do_GET()
 
     def do_POST(self):
@@ -86,10 +121,38 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
         elif parsed.path == '/api/resume':
             task_id = req_data.get('task_id', '')
             res = {"success": engine.resume_download(task_id)}
+        elif parsed.path == '/api/resume_all':
+            for t in engine.tasks.values():
+                if t.status in ("paused", "queued", "error"):
+                    t.resume()
+            engine.save_state()
+            res = {"success": True}
+        elif parsed.path == '/api/pause_all':
+            for t in engine.tasks.values():
+                if t.status == "downloading":
+                    t.pause()
+            engine.save_state()
+            res = {"success": True}
         elif parsed.path == '/api/delete':
             task_id = req_data.get('task_id', '')
             remove_file = bool(req_data.get('remove_file', False))
             res = {"success": engine.delete_download(task_id, remove_file)}
+        elif parsed.path == '/api/open_folder':
+            task_id = req_data.get('task_id', '')
+            if task_id in engine.tasks:
+                path = engine.tasks[task_id].save_path
+                folder = os.path.dirname(path)
+                if os.path.exists(path):
+                    os.system(f'explorer /select,"{path}"')
+                elif os.path.exists(folder):
+                    os.system(f'explorer "{folder}"')
+                res = {"success": True}
+        elif parsed.path == '/api/clear_completed':
+            to_del = [tid for tid, t in engine.tasks.items() if t.status == "completed"]
+            for tid in to_del:
+                del engine.tasks[tid]
+            engine.save_state()
+            res = {"success": True}
         elif parsed.path == '/api/limiter':
             limit = int(req_data.get('limit', 150))
             engine.config["speed_limit_mb"] = limit
@@ -108,37 +171,50 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
         pass
 
 
-def start_server(port=9876):
-    server = HTTPServer(('127.0.0.1', port), ParvanHttpHandler)
-    server.serve_forever()
+def find_browser_executable():
+    paths = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return None
 
+def start_server(port=9876):
+    try:
+        server = HTTPServer(('127.0.0.1', port), ParvanHttpHandler)
+        server.serve_forever()
+    except Exception:
+        pass
 
 def main():
     port = 9876
-    # Start local server thread
     srv_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
     srv_thread.start()
-    print(f"[PARVAN SERVER] Running at http://127.0.0.1:{port}")
+    print(f"[PARVAN SERVER] Running on http://127.0.0.1:{port}")
+    time.sleep(0.5)
 
-    # Launch Native Desktop Window using pywebview
-    try:
-        import webview
-        api = ParvanJsApi()
-        window = webview.create_window(
-            title="پروان دانلود منیجر | Parvan Download Manager",
-            url=f"http://127.0.0.1:{port}/index.html",
-            width=1160,
-            height=760,
-            min_size=(900, 600),
-            background_color='#07090E',
-            js_api=api
-        )
-        print("[PARVAN DESKTOP] Window launched successfully.")
-        webview.start(debug=False)
-    except Exception as e:
-        print(f"[PARVAN DESKTOP] Fallback to App Mode: {e}")
-        # Launch via Edge App mode (Standalone window)
-        os.system(f'start msedge --app=http://127.0.0.1:{port}/index.html')
+    browser = find_browser_executable()
+    app_url = f"http://127.0.0.1:{port}/index.html"
+    user_data_dir = os.path.join(CURRENT_DIR, ".profile_data")
+
+    if browser:
+        print(f"[PARVAN DESKTOP] Launching Window with: {browser}")
+        import subprocess
+        cmd = [
+            browser,
+            f"--app={app_url}",
+            "--window-size=1180,780",
+            f"--user-data-dir={user_data_dir}",
+            "--app-id=ParvanDownloadManager"
+        ]
+        proc = subprocess.Popen(cmd)
+        proc.wait()
+    else:
+        os.system(f'start {app_url}')
         while True:
             time.sleep(1)
 
