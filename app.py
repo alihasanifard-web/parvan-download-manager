@@ -183,6 +183,100 @@ def find_browser_executable():
             return p
     return None
 
+tray_icon = None
+window_proc = None
+
+def launch_window():
+    global window_proc
+    browser = find_browser_executable()
+    app_url = "http://127.0.0.1:9876/index.html"
+    user_data_dir = os.path.join(CURRENT_DIR, ".profile_data")
+
+    if window_proc and window_proc.poll() is None:
+        # already open, try to focus or reopen
+        return
+
+    if browser:
+        cmd = [
+            browser,
+            f"--app={app_url}",
+            "--window-size=1180,780",
+            f"--user-data-dir={user_data_dir}",
+            "--app-id=ParvanDownloadManager"
+        ]
+        window_proc = subprocess.Popen(cmd)
+    else:
+        os.system(f'start {app_url}')
+
+def setup_tray():
+    global tray_icon
+    try:
+        import pystray
+        from PIL import Image
+
+        icon_path = os.path.join(CURRENT_DIR, "logo.png")
+        if not os.path.exists(icon_path):
+            icon_path = os.path.join(os.path.dirname(CURRENT_DIR), "logo.png")
+        
+        image = Image.open(icon_path)
+
+        def on_open(icon, item):
+            launch_window()
+
+        def on_resume_all(icon, item):
+            for t in engine.tasks.values():
+                if t.status in ("paused", "queued", "error"):
+                    t.resume()
+            engine.save_state()
+
+        def on_pause_all(icon, item):
+            for t in engine.tasks.values():
+                if t.status == "downloading":
+                    t.pause()
+            engine.save_state()
+
+        def on_open_folder(icon, item):
+            downloads = engine.config.get("save_directory", os.path.join(os.path.expanduser("~"), "Downloads"))
+            os.system(f'explorer "{downloads}"')
+
+        def on_exit(icon, item):
+            global window_proc
+            if window_proc and window_proc.poll() is None:
+                try:
+                    window_proc.terminate()
+                except Exception:
+                    pass
+            icon.stop()
+            os._exit(0)
+
+        menu = pystray.Menu(
+            pystray.MenuItem("⚡ پروان دانلود منیجر (باز کردن)", on_open, default=True),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("▶️ شروع همه دانلودها", on_resume_all),
+            pystray.MenuItem("⏸️ توقف همه دانلودها", on_pause_all),
+            pystray.MenuItem("📂 باز کردن پوشه دانلودها", on_open_folder),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("❌ خروج کامل از برنامه", on_exit)
+        )
+
+        tray_icon = pystray.Icon("ParvanDownloadManager", image, "پروان دانلود منیجر | Parvan DL", menu)
+        return tray_icon
+    except Exception as e:
+        print("[PARVAN TRAY] Tray initialization error:", e)
+        return None
+
+def on_task_completed_notify(task):
+    global tray_icon
+    print(f"[PARVAN ENGINE] Task completed: {task.filename}")
+    if tray_icon:
+        try:
+            tray_icon.notify(
+                f"دانلود با موفقیت پایان یافت:\n{task.filename} ({task.total_size_fmt})",
+                "⚡ پروان دانلود منیجر"
+            )
+        except Exception as e:
+            print("[PARVAN NOTIFY] Error:", e)
+
 def start_server(port=9876):
     try:
         server = HTTPServer(('127.0.0.1', port), ParvanHttpHandler)
@@ -197,24 +291,19 @@ def main():
     print(f"[PARVAN SERVER] Running on http://127.0.0.1:{port}")
     time.sleep(0.5)
 
-    browser = find_browser_executable()
-    app_url = f"http://127.0.0.1:{port}/index.html"
-    user_data_dir = os.path.join(CURRENT_DIR, ".profile_data")
+    # Register notification hook
+    engine.notification_callback = on_task_completed_notify
 
-    if browser:
-        print(f"[PARVAN DESKTOP] Launching Window with: {browser}")
-        import subprocess
-        cmd = [
-            browser,
-            f"--app={app_url}",
-            "--window-size=1180,780",
-            f"--user-data-dir={user_data_dir}",
-            "--app-id=ParvanDownloadManager"
-        ]
-        proc = subprocess.Popen(cmd)
-        proc.wait()
+    # Setup System Tray Icon
+    icon = setup_tray()
+
+    # Launch initial window
+    launch_window()
+
+    if icon:
+        print("[PARVAN TRAY] System Tray active in background.")
+        icon.run()
     else:
-        os.system(f'start {app_url}')
         while True:
             time.sleep(1)
 

@@ -1,0 +1,10 @@
+# Build artifacts
+dist/
+build/
+*.spec
+app_payload.zip
+*.pyc
+__pycache__/
+.profile_data/
+tasks_state.json
+*.lnk

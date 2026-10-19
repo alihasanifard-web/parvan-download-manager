@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پروان دانلود منیجر</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="Parvan Logo" class="brand-logo">
+      <div>
+        <div class="brand-title">پروان دانلود منیجر</div>
+        <div class="brand-version">افزونه رسمی مرورگر v1.0</div>
+      </div>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <span class="status-dot"></span>
+      <span id="statusText">بررسی اتصال...</span>
+    </div>
+  </div>
+
+  <!-- Telemetry Bar -->
+  <div class="telemetry-bar">
+    <div class="telemetry-item">
+      <div class="telemetry-label">سرعت دانلود</div>
+      <div class="telemetry-val" id="metricSpeed">۰.۰ <span class="unit">MB/s</span></div>
+    </div>
+    <div class="telemetry-item">
+      <div class="telemetry-label">دانلودهای فعال</div>
+      <div class="telemetry-val" id="metricActive">۰ <span class="unit">تسک</span></div>
+    </div>
+  </div>
+
+  <!-- Quick Add Box -->
+  <div class="section-box">
+    <div class="box-title">دانلود مستقیم لینک</div>
+    <div class="input-row">
+      <input type="text" id="inputUrl" placeholder="https://example.com/file.zip" dir="ltr">
+      <button class="btn-primary" id="btnDownload">
+        <span>⚡ دانلود</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Options & Controls -->
+  <div class="controls-list">
+    <div class="control-item">
+      <div>
+        <div class="control-label">رهگیری خودکار دانلودها</div>
+        <div class="control-desc">انتقال دانلودهای مرورگر به پروان</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggleIntercept" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="control-item">
+      <div>
+        <div class="control-label">تعداد کانکشن پیش‌فرض</div>
+        <div class="control-desc">چانک‌های همزمان هر دانلود</div>
+      </div>
+      <select id="selectThreads" class="select-styled">
+        <option value="4">۴ کانکشن</option>
+        <option value="8">۸ کانکشن</option>
+        <option value="16" selected>۱۶ توربو</option>
+        <option value="32">۳۲ هایپر</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="footer">
+    <button class="btn-secondary" id="btnOpenApp">
+      <span>🖥️ باز کردن برنامه پروان</span>
+    </button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

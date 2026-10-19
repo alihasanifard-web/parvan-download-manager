@@ -250,6 +250,10 @@ class DownloadTask:
             self.status = "completed"
             self.speed_bps = 0
             self.eta_seconds = 0
+            try:
+                engine.on_task_completed(self)
+            except Exception:
+                pass
 
     def pause(self):
         self.is_paused = True
@@ -300,10 +304,19 @@ class ParvanEngine:
         self.config = load_config()
         self.tasks = {}
         self.proxy = self._resolve_proxy()
+        self.notification_callback = None
         self._load_saved_state()
 
         if not self.tasks:
             self._seed_initial_tasks()
+
+    def on_task_completed(self, task):
+        self.save_state()
+        if self.notification_callback:
+            try:
+                self.notification_callback(task)
+            except Exception as e:
+                print("Notification error:", e)
 
     def _resolve_proxy(self):
         mode = self.config.get("proxy_mode", "auto")
