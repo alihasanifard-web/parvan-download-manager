@@ -307,9 +307,6 @@ class ParvanEngine:
         self.notification_callback = None
         self._load_saved_state()
 
-        if not self.tasks:
-            self._seed_initial_tasks()
-
     def on_task_completed(self, task):
         self.save_state()
         if self.notification_callback:
