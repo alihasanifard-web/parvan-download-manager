@@ -1127,6 +1127,38 @@
     </div>
   </div>
 
+  <!-- Modal Media Preview -->
+  <div class="modal-overlay" id="modalPreview">
+    <div class="modal-box" style="width: 720px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--cyan-neon);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span id="previewVideoTitle" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;">پیش‌نمایش زنده ویدیو</span>
+        </div>
+        <div style="cursor: pointer;" id="btnClosePreview">✕</div>
+      </div>
+
+      <div class="modal-content" style="padding: 12px; background: #000; text-align: center;">
+        <video id="previewVideoPlayer" controls autoplay style="width: 100%; max-height: 420px; border-radius: 8px; background: #000; outline: none;"></video>
+      </div>
+
+      <div class="modal-bottom" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 0.78rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px;">
+          <span style="color: var(--cyan-neon);">●</span>
+          <span>پخش استریم همزمان با دانلود توسط هسته پروان</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-pill" id="btnPlayExternal" title="باز کردن فایل در مدیا پلیر اصلی ویندوز">
+            🖥️ پخش در پلیر ویندوز
+          </button>
+          <button class="btn-pill" id="btnClosePreviewBtn">بستن پنجره</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Real-time Animation & Logic -->
   <script>
     // Sound Synthesizer Effects
@@ -1406,6 +1438,7 @@
         const isDownloading = t.status === 'downloading';
         const isPaused = t.status === 'paused';
         const isDone = t.status === 'completed';
+        const isMedia = t.category === 'media' || (t.filename && (t.filename.toLowerCase().endsWith('.mp4') || t.filename.toLowerCase().endsWith('.mkv') || t.filename.toLowerCase().endsWith('.webm') || t.filename.toLowerCase().endsWith('.mp3') || t.filename.toLowerCase().endsWith('.avi')));
         card.className = `task-card ${isDownloading ? 'active-state' : ''}`;
 
         const iconType = (t.category || 'APP').toUpperCase();
@@ -1437,6 +1470,13 @@
             </div>
 
             <div class="task-controls">
+              ${isMedia ? `
+                <button class="btn-circle btn-task-preview" data-id="${t.id}" data-name="${t.filename}" title="▶️ پیش‌نمایش ویدیو (پخش در حین دانلود)" style="color: var(--cyan-neon); border-color: rgba(0, 245, 255, 0.4);">
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  </svg>
+                </button>
+              ` : ''}
               ${!isDone ? `
                 <button class="btn-circle btn-task-toggle" data-id="${t.id}" data-status="${t.status}" title="${isDownloading ? 'توقف موقت' : 'ادامه دانلود'}">
                   ${isDownloading ? 
@@ -1515,6 +1555,22 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ task_id: id })
           }).catch(()=>{});
+        };
+      });
+
+      // Preview Video button
+      document.querySelectorAll('.btn-task-preview').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          const name = btn.getAttribute('data-name');
+          currentPreviewTaskId = id;
+          document.getElementById('previewVideoTitle').textContent = `پیش‌نمایش زنده: ${name}`;
+          const player = document.getElementById('previewVideoPlayer');
+          player.src = `${API_BASE}/stream?task_id=${id}&t=${Date.now()}`;
+          player.load();
+          document.getElementById('modalPreview').classList.add('show');
+          playBeep(850, 0.06);
         };
       });
 
@@ -1676,6 +1732,35 @@
       }).catch(()=>{});
       modalSettings.classList.remove('show');
       fetchTelemetry();
+    };
+
+    // Preview Video Modal Controls
+    let currentPreviewTaskId = null;
+    const modalPreview = document.getElementById('modalPreview');
+    const previewVideoPlayer = document.getElementById('previewVideoPlayer');
+
+    function closePreviewModal() {
+      if (previewVideoPlayer) {
+        previewVideoPlayer.pause();
+        previewVideoPlayer.removeAttribute('src');
+        previewVideoPlayer.load();
+      }
+      modalPreview.classList.remove('show');
+      playBeep(450, 0.05);
+    }
+
+    document.getElementById('btnClosePreview').onclick = closePreviewModal;
+    document.getElementById('btnClosePreviewBtn').onclick = closePreviewModal;
+
+    document.getElementById('btnPlayExternal').onclick = async () => {
+      if (currentPreviewTaskId) {
+        playBeep(700, 0.05);
+        await fetch(`${API_BASE}/play_external`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task_id: currentPreviewTaskId })
+        }).catch(()=>{});
+      }
     };
 
     // Keyboard shortcut (Ctrl + N or Ctrl + K for new download)

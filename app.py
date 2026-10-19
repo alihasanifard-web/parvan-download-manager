@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import time
+import subprocess
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import urllib.parse
@@ -101,6 +102,55 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             clip = get_clipboard_url()
             self.wfile.write(json.dumps({"has_url": bool(clip), "url": clip}).encode('utf-8'))
             return
+        elif parsed.path == '/api/stream':
+            qs = urllib.parse.parse_qs(parsed.query)
+            task_id = qs.get('task_id', [''])[0]
+            if task_id in engine.tasks:
+                task = engine.tasks[task_id]
+                file_path = task.save_path
+                if os.path.exists(file_path):
+                    file_size = os.path.getsize(file_path)
+                    range_header = self.headers.get('Range')
+                    mime = 'video/mp4'
+                    if file_path.lower().endswith('.mkv'): mime = 'video/x-matroska'
+                    elif file_path.lower().endswith('.webm'): mime = 'video/webm'
+                    elif file_path.lower().endswith('.mp3'): mime = 'audio/mpeg'
+
+                    if range_header:
+                        try:
+                            ranges = range_header.replace('bytes=', '').split('-')
+                            start = int(ranges[0])
+                            end = int(ranges[1]) if len(ranges) > 1 and ranges[1] else min(start + 2*1024*1024 - 1, file_size - 1)
+                            end = min(end, file_size - 1)
+                            length = end - start + 1
+
+                            self.send_response(206)
+                            self.send_header('Content-Type', mime)
+                            self.send_header('Content-Range', f'bytes {start}-{end}/{file_size}')
+                            self.send_header('Content-Length', str(length))
+                            self.send_header('Accept-Ranges', 'bytes')
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.end_headers()
+
+                            with open(file_path, 'rb') as f:
+                                f.seek(start)
+                                self.wfile.write(f.read(length))
+                            return
+                        except Exception as e:
+                            print("Streaming error:", e)
+
+                    self.send_response(200)
+                    self.send_header('Content-Type', mime)
+                    self.send_header('Content-Length', str(file_size))
+                    self.send_header('Accept-Ranges', 'bytes')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    with open(file_path, 'rb') as f:
+                        self.wfile.write(f.read(min(file_size, 4 * 1024 * 1024)))
+                    return
+            self.send_response(404)
+            self.end_headers()
+            return
         super().do_GET()
 
     def do_POST(self):
@@ -147,6 +197,13 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
                 elif os.path.exists(folder):
                     os.system(f'explorer "{folder}"')
                 res = {"success": True}
+        elif parsed.path == '/api/play_external':
+            task_id = req_data.get('task_id', '')
+            if task_id in engine.tasks:
+                path = engine.tasks[task_id].save_path
+                if os.path.exists(path):
+                    os.system(f'start "" "{path}"')
+                    res = {"success": True}
         elif parsed.path == '/api/clear_completed':
             to_del = [tid for tid, t in engine.tasks.items() if t.status == "completed"]
             for tid in to_del:

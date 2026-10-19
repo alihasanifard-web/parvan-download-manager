@@ -26,6 +26,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+// Listen for messages from Content Script (Video Sniffer)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "download_media" && request.url) {
+    chrome.storage.local.get(["threads"], (res) => {
+      sendToParvan(request.url, res.threads || 16, request.title || "");
+    });
+    sendResponse({ status: "sent" });
+  }
+  return true;
+});
+
 // Auto Intercept Browser Downloads
 chrome.downloads.onCreated.addListener(async (downloadItem) => {
   const url = downloadItem.finalUrl || downloadItem.url;
