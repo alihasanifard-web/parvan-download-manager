@@ -306,9 +306,67 @@ class ParvanEngine:
         self.proxy = self._resolve_proxy()
         self.notification_callback = None
         self._load_saved_state()
+        self._start_remote_sync_worker()
+
+    def _start_remote_sync_worker(self):
+        """Polls local Telegram Bot Bridge (port 9877) for pending remote download tasks."""
+        def sync_loop():
+            import urllib.request
+            while True:
+                try:
+                    req = urllib.request.Request("http://127.0.0.1:9877/api/remote/poll")
+                    with urllib.request.urlopen(req, timeout=3) as resp:
+                        data = json.loads(resp.read().decode('utf-8'))
+                        pending_tasks = data.get("tasks", [])
+                        for pt in pending_tasks:
+                            task_id = pt["id"]
+                            url = pt["url"]
+                            user_id = pt["user_id"]
+                            # Acknowledge receipt
+                            ack_req = urllib.request.Request(
+                                "http://127.0.0.1:9877/api/remote/ack",
+                                data=json.dumps({"task_id": task_id}).encode('utf-8'),
+                                headers={"Content-Type": "application/json"}
+                            )
+                            urllib.request.urlopen(ack_req, timeout=3)
+
+                            # Add to Parvan Engine
+                            new_task_info = self.add_download(url)
+                            # Associate remote metadata
+                            new_task_id = new_task_info["id"]
+                            if new_task_id in self.tasks:
+                                self.tasks[new_task_id]._remote_meta = {
+                                    "bridge_task_id": task_id,
+                                    "user_id": user_id
+                                }
+                except Exception:
+                    pass
+                time.sleep(3)
+
+        t = threading.Thread(target=sync_loop, daemon=True)
+        t.start()
 
     def on_task_completed(self, task):
         self.save_state()
+        # Notify Telegram Bot Bridge if this was a remote task
+        if hasattr(task, "_remote_meta") and task._remote_meta:
+            try:
+                import urllib.request
+                meta = task._remote_meta
+                complete_data = {
+                    "task_id": meta["bridge_task_id"],
+                    "user_id": meta["user_id"],
+                    "filename": task.filename
+                }
+                req = urllib.request.Request(
+                    "http://127.0.0.1:9877/api/remote/complete",
+                    data=json.dumps(complete_data).encode('utf-8'),
+                    headers={"Content-Type": "application/json"}
+                )
+                urllib.request.urlopen(req, timeout=3)
+            except Exception as e:
+                print("Failed to notify remote bridge:", e)
+
         if self.notification_callback:
             try:
                 self.notification_callback(task)
