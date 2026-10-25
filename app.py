@@ -57,6 +57,17 @@ class ParvanJsApi:
     def update_settings(self, new_cfg):
         return engine.update_settings(new_cfg)
 
+    def sniff_media(self, page_url):
+        return engine.sniff_media(page_url)
+
+    def scan_file(self, task_id):
+        if task_id in engine.tasks:
+            task = engine.tasks[task_id]
+            if os.path.exists(task.save_path):
+                from engine import scan_file_with_defender
+                return scan_file_with_defender(task.save_path)
+        return {"status": "error", "message": "Task not found"}
+
     def auto_extract(self, task_id):
         if task_id in engine.tasks:
             task = engine.tasks[task_id]

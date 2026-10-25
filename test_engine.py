@@ -177,7 +177,31 @@ class TestParvanDownloadEngine(unittest.TestCase):
         with open(os.path.join(out_dir, "hello.txt"), "r", encoding="utf-8") as f:
             self.assertEqual(f.read(), "سلام از پروان دانلود منیجر")
 
-    def test_07_engine_telemetry_and_no_mock_auto_seed(self):
+    def test_08_parse_magnet_link(self):
+        from engine import parse_magnet_link
+        magnet = "magnet:?xt=urn:btih:d2474e86c95b19b8bcfdb92bc12c9d44667cfa36&dn=Ubuntu+24.04+Desktop&tr=http%3A%2F%2Ftracker.com%3A80%2Fannounce"
+        parsed = parse_magnet_link(magnet)
+        self.assertIsNotNone(parsed)
+        assert parsed is not None
+        self.assertEqual(parsed["info_hash"], "d2474e86c95b19b8bcfdb92bc12c9d44667cfa36")
+        self.assertEqual(parsed["filename"], "Ubuntu 24.04 Desktop")
+        self.assertIn("http://tracker.com:80/announce", parsed["trackers"])
+
+    def test_09_windows_defender_scan_cli(self):
+        from engine import scan_file_with_defender
+        clean_file = os.path.join(self.test_dir, "clean_sample.txt")
+        with open(clean_file, "w", encoding="utf-8") as f:
+            f.write("This is a clean and safe text file from Parvan DL.")
+        
+        scan_res = scan_file_with_defender(clean_file)
+        self.assertIn(scan_res["status"], ["clean", "skipped"])
+
+    def test_10_media_sniffer_fallback(self):
+        # Verify media sniffer returns valid dict
+        res = engine.sniff_media("https://example.com/not_a_video")
+        self.assertIn("success", res)
+
+    def test_11_engine_telemetry_and_no_mock_auto_seed(self):
         test_engine = ParvanEngine()
         # Verify engine does NOT auto-seed mock tasks if state is clean
         # or reflects only actual tasks

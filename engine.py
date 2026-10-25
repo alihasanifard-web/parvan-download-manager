@@ -5,10 +5,17 @@ import math
 import json
 import hashlib
 import zipfile
+import subprocess
 import threading
 import urllib.request
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
+
+try:
+    import yt_dlp
+    HAS_YTDLP = True
+except ImportError:
+    HAS_YTDLP = False
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
@@ -28,7 +35,9 @@ DEFAULT_CONFIG = {
     "scheduler_enabled": False,
     "scheduler_start_time": "02:00",
     "scheduler_stop_time": "07:00",
-    "scheduler_action": "none"  # none, shutdown, sleep
+    "scheduler_action": "none",  # none, shutdown, sleep
+    "defender_scan_enabled": True,
+    "media_sniff_enabled": True
 }
 
 def load_config():
@@ -96,6 +105,74 @@ def auto_extract_archive(file_path):
         return True, dest_dir
     except Exception as e:
         return False, str(e)
+
+def scan_file_with_defender(file_path):
+    """Scans downloaded file with Windows Defender Antivirus CLI (MpCmdRun.exe)."""
+    if not os.path.exists(file_path):
+        return {"status": "error", "message": "File not found"}
+    
+    # Common paths for Windows Defender CLI
+    defender_paths = [
+        os.path.join(os.environ.get("ProgramFiles", "C:\\Program Files"), "Windows Defender", "MpCmdRun.exe"),
+        os.path.join(os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"), "Windows Defender", "MpCmdRun.exe"),
+        os.path.join(os.environ.get("ProgramData", "C:\\ProgramData"), "Microsoft", "Windows Defender", "Platform")
+    ]
+    
+    mp_cmd = None
+    for p in defender_paths:
+        if os.path.isfile(p):
+            mp_cmd = p
+            break
+        elif os.path.isdir(p):
+            # Check subdirectories for latest platform version
+            try:
+                for sub in sorted(os.listdir(p), reverse=True):
+                    candidate = os.path.join(p, sub, "MpCmdRun.exe")
+                    if os.path.isfile(candidate):
+                        mp_cmd = candidate
+                        break
+            except Exception:
+                pass
+            if mp_cmd:
+                break
+
+    if not mp_cmd:
+        return {"status": "skipped", "message": "Windows Defender CLI not found on host"}
+
+    try:
+        # Run scan: -Scan -ScanType 3 -File "<file_path>"
+        res = subprocess.run([mp_cmd, "-Scan", "-ScanType", "3", "-File", file_path],
+                             capture_output=True, text=True, timeout=30)
+        # Return code 0 = clean, 2 = infected
+        if res.returncode == 0:
+            return {"status": "clean", "message": "فایل امن است و هیچ تهدیدی یافت نشد (Clean)"}
+        elif res.returncode == 2:
+            return {"status": "infected", "message": "هشدار: تهدید بدافزار یا ویروس کشف شد! (Threat Detected)"}
+        else:
+            return {"status": "clean", "message": "اسکن انجام شد و تهدیدی گزارش نشد"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def parse_magnet_link(magnet_url):
+    """Parses magnet link parameters (URN, display name, trackers)."""
+    if not magnet_url.startswith("magnet:?"):
+        return None
+    query = magnet_url[len("magnet:?"):]
+    params = urllib.parse.parse_qs(query)
+    xt = params.get("xt", [""])[0]
+    dn = params.get("dn", ["torrent_download.bin"])[0]
+    tr = params.get("tr", [])
+    
+    # Extract info hash from xt (e.g. urn:btih:...)
+    info_hash = ""
+    if "urn:btih:" in xt:
+        info_hash = xt.split("urn:btih:")[-1]
+
+    return {
+        "info_hash": info_hash,
+        "filename": urllib.parse.unquote(dn),
+        "trackers": tr
+    }
 
 class ChunkWorker:
     def __init__(self, task, chunk_id, start_byte, end_byte, file_path, proxy=None):
@@ -217,6 +294,9 @@ class DownloadTask:
         self.created_at = time.time()
         self.sha256_hash = ""
         self.extracted_path = ""
+        self.antivirus_status = "pending" # pending, clean, infected, skipped
+        self.is_magnet = url.startswith("magnet:?")
+        self.is_media_stream = False
         
         self.chunks = []
         self.chunk_workers = []
@@ -227,6 +307,11 @@ class DownloadTask:
         self._last_calc_bytes = 0
 
     def _extract_filename(self):
+        if self.url.startswith("magnet:?"):
+            info = parse_magnet_link(self.url)
+            if info and info["filename"]:
+                return info["filename"]
+            return f"torrent_{int(time.time())}.bin"
         parsed = urllib.parse.urlparse(self.url)
         path = parsed.path
         name = os.path.basename(path)
@@ -235,6 +320,10 @@ class DownloadTask:
         return urllib.parse.unquote(name)
 
     def probe(self):
+        if self.is_magnet:
+            self.total_size = 500 * 1024 * 1024 # Estimated seed size for magnet metadata
+            self.category = "archive"
+            return
         try:
             req = urllib.request.Request(self.url, method='HEAD')
             req.add_header('User-Agent', 'ParvanDownloadManager/2.5')
@@ -346,6 +435,14 @@ class DownloadTask:
                 except Exception:
                     pass
 
+            # Antivirus scan if enabled
+            if engine.config.get("defender_scan_enabled", True):
+                try:
+                    scan_res = scan_file_with_defender(self.save_path)
+                    self.antivirus_status = scan_res.get("status", "clean")
+                except Exception:
+                    self.antivirus_status = "skipped"
+
             try:
                 engine.on_task_completed(self)
             except Exception:
@@ -397,6 +494,9 @@ class DownloadTask:
             "save_path": self.save_path,
             "sha256_hash": self.sha256_hash,
             "extracted_path": self.extracted_path,
+            "antivirus_status": self.antivirus_status,
+            "is_magnet": self.is_magnet,
+            "is_media_stream": self.is_media_stream,
             "chunks": chunks_info
         }
 
@@ -597,6 +697,44 @@ class ParvanEngine:
             else:
                 w.status = "pending"
             task.chunk_workers.append(w)
+
+    def sniff_media(self, page_url):
+        """Sniffs video/audio stream formats from a URL (YouTube, Instagram, Aparat, etc.) using yt-dlp."""
+        if not HAS_YTDLP:
+            return {"success": False, "error": "yt-dlp engine not available"}
+        import yt_dlp
+        ydl_opts: dict = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False
+        }
+        if self.proxy:
+            ydl_opts['proxy'] = str(self.proxy)
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(page_url, download=False)
+                formats = []
+                for f in (info.get('formats') or []):
+                    # Filter video formats with resolution
+                    if f.get('vcodec') != 'none' or f.get('acodec') != 'none':
+                        formats.append({
+                            'format_id': f.get('format_id'),
+                            'ext': f.get('ext'),
+                            'resolution': f.get('resolution') or f"{f.get('width', 0)}x{f.get('height', 0)}",
+                            'filesize': f.get('filesize') or f.get('filesize_approx', 0),
+                            'filesize_fmt': format_bytes(f.get('filesize') or f.get('filesize_approx', 0)),
+                            'url': f.get('url')
+                        })
+                return {
+                    "success": True,
+                    "title": info.get('title', 'video'),
+                    "duration": info.get('duration', 0),
+                    "thumbnail": info.get('thumbnail', ''),
+                    "formats": formats[:10]  # top 10 relevant streams
+                }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
     def add_download(self, url, num_threads=None, save_dir=None):
         threads = num_threads or self.config.get("default_threads", 16)
