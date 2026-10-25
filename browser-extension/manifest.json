@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "پروان دانلود منیجر | Parvan Download Extension",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "افزونه رسمی پروان دانلود منیجر برای رهگیری خودکار دانلودها و دانلود فوق سریع با چند کانکشن همزمان",
   "icons": {
     "16": "icons/icon16.png",

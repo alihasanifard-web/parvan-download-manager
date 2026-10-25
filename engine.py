@@ -87,7 +87,7 @@ class ChunkWorker:
             return
 
         req = urllib.request.Request(self.task.url)
-        req.add_header('User-Agent', 'ParvanDownloadManager/2.5')
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ParvanDownloadManager/3.0')
         req.add_header('Range', f'bytes={cur_start}-{self.end_byte}')
 
         opener = urllib.request.build_opener()
@@ -95,29 +95,67 @@ class ChunkWorker:
             proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
             opener = urllib.request.build_opener(proxy_handler)
 
-        try:
-            with opener.open(req, timeout=12) as resp:
-                with open(self.file_path, 'r+b') as f:
-                    f.seek(cur_start)
-                    buf_size = 64 * 1024 # 64 KB
-                    while not self._stop_flag and not self.task.is_paused:
-                        data = resp.read(buf_size)
-                        if not data:
-                            break
-                        f.write(data)
-                        chunk_len = len(data)
-                        self.downloaded += chunk_len
-                        with self.task.lock:
-                            self.task.downloaded_bytes += chunk_len
+        max_retries = 5
+        retry_delay = 1.0
 
-            if self.downloaded >= self.total_bytes:
-                self.status = "done"
-            elif self.task.is_paused:
-                self.status = "paused"
-        except Exception as e:
-            if not self._stop_flag and not self.task.is_paused:
-                self.status = "error"
-                print(f"[Task {self.task.id} - Chunk {self.chunk_id}] Error: {e}")
+        for attempt in range(max_retries):
+            if self._stop_flag or self.task.is_paused:
+                break
+            try:
+                # Re-calculate current start byte in case of partial progress before retry
+                cur_start = self.start_byte + self.downloaded
+                if cur_start > self.end_byte:
+                    self.status = "done"
+                    return
+                req.headers['Range'] = f'bytes={cur_start}-{self.end_byte}'
+
+                with opener.open(req, timeout=15) as resp:
+                    with open(self.file_path, 'r+b') as f:
+                        f.seek(cur_start)
+                        buf_size = 128 * 1024 # 128 KB high-speed buffer
+                        while not self._stop_flag and not self.task.is_paused:
+                            # Apply global speed limiter if enabled
+                            if engine.speed_limit_mb > 0:
+                                max_bps = engine.speed_limit_mb * 1024 * 1024
+                                per_thread_bps = max(1024 * 64, max_bps // max(1, self.task.num_threads))
+                                chunk_start_t = time.time()
+                                data = resp.read(buf_size)
+                                if not data:
+                                    break
+                                f.write(data)
+                                chunk_len = len(data)
+                                self.downloaded += chunk_len
+                                with self.task.lock:
+                                    self.task.downloaded_bytes += chunk_len
+
+                                elapsed = time.time() - chunk_start_t
+                                expected_time = chunk_len / per_thread_bps
+                                if expected_time > elapsed:
+                                    time.sleep(expected_time - elapsed)
+                            else:
+                                data = resp.read(buf_size)
+                                if not data:
+                                    break
+                                f.write(data)
+                                chunk_len = len(data)
+                                self.downloaded += chunk_len
+                                with self.task.lock:
+                                    self.task.downloaded_bytes += chunk_len
+
+                if self.downloaded >= self.total_bytes:
+                    self.status = "done"
+                    return
+                elif self.task.is_paused:
+                    self.status = "paused"
+                    return
+            except Exception as e:
+                if self._stop_flag or self.task.is_paused:
+                    return
+                time.sleep(retry_delay)
+                retry_delay = min(5.0, retry_delay * 1.5)
+
+        if not self._stop_flag and not self.task.is_paused and self.downloaded < self.total_bytes:
+            self.status = "error"
 
     def stop(self):
         self._stop_flag = True
@@ -303,6 +341,7 @@ class ParvanEngine:
     def __init__(self):
         self.config = load_config()
         self.tasks = {}
+        self.speed_limit_mb = self.config.get("speed_limit_mb", 0)
         self.proxy = self._resolve_proxy()
         self.notification_callback = None
         self._load_saved_state()
@@ -493,6 +532,8 @@ class ParvanEngine:
 
     def set_speed_limit(self, limit_mb):
         self.speed_limit_mb = int(limit_mb)
+        self.config["speed_limit_mb"] = self.speed_limit_mb
+        save_config(self.config)
 
     def get_telemetry(self):
         active_tasks = [t for t in self.tasks.values() if t.status == "downloading"]
@@ -542,6 +583,8 @@ class ParvanEngine:
                         self.tasks[t.id] = t
             except Exception as e:
                 print("Failed to load saved state:", e)
+        # Note: Do NOT auto-seed mock/demo tasks if tasks_state.json is empty or fresh.
+        # User explicitly strictly disallows mock/demo tasks auto-seeding into fresh queues.
 
 # Global Engine instance
 engine = ParvanEngine()

@@ -7,7 +7,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
-VERSION = "2.5.0"
+VERSION = "3.0.0"
 APP_NAME = "Parvan Download Manager"
 APP_NAME_FA = "پروان دانلود منیجر"
 
