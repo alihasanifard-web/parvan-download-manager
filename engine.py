@@ -3,6 +3,8 @@ import sys
 import time
 import math
 import json
+import mmap
+import socket
 import hashlib
 import zipfile
 import subprocess
@@ -37,7 +39,11 @@ DEFAULT_CONFIG = {
     "scheduler_stop_time": "07:00",
     "scheduler_action": "none",  # none, shutdown, sleep
     "defender_scan_enabled": True,
-    "media_sniff_enabled": True
+    "media_sniff_enabled": True,
+    "max_concurrent_downloads": 3,
+    "network_bonding_enabled": False,
+    "bonded_interfaces": [],
+    "zero_copy_mmap": True
 }
 
 def load_config():
@@ -65,6 +71,18 @@ def format_bytes(num_bytes):
     p = math.pow(1024, i)
     s = round(num_bytes / p, 2)
     return f"{s} {units[i]}"
+
+def get_network_interfaces():
+    """Detects available network adapters and local IP addresses for bonding."""
+    interfaces = []
+    try:
+        hostname = socket.gethostname()
+        for ip in socket.gethostbyname_ex(hostname)[2]:
+            if not ip.startswith("127."):
+                interfaces.append(ip)
+    except Exception:
+        pass
+    return interfaces
 
 def detect_category(filename):
     ext = os.path.splitext(filename)[1].lower()
@@ -175,7 +193,7 @@ def parse_magnet_link(magnet_url):
     }
 
 class ChunkWorker:
-    def __init__(self, task, chunk_id, start_byte, end_byte, file_path, proxy=None):
+    def __init__(self, task, chunk_id, start_byte, end_byte, file_path, proxy=None, bind_ip=None):
         self.task = task
         self.chunk_id = chunk_id
         self.start_byte = start_byte
@@ -184,6 +202,7 @@ class ChunkWorker:
         self.downloaded = 0
         self.file_path = file_path
         self.proxy = proxy
+        self.bind_ip = bind_ip
         self.status = "pending" # pending, active, done, paused, error
         self._stop_flag = False
 
@@ -292,6 +311,8 @@ class DownloadTask:
         self.speed_bps = 0
         self.eta_seconds = 0
         self.created_at = time.time()
+        self.priority = 1 # 0 = low, 1 = normal, 2 = high
+        self.queue_position = 0
         self.sha256_hash = ""
         self.extracted_path = ""
         self.antivirus_status = "pending" # pending, clean, infected, skipped
@@ -381,10 +402,12 @@ class DownloadTask:
         if not self.chunk_workers:
             part_size = math.ceil(self.total_size / self.num_threads)
             self.chunk_workers = []
+            bonding_ips = engine.config.get("bonded_interfaces", []) if engine.config.get("network_bonding_enabled", False) else []
             for i in range(self.num_threads):
                 start = i * part_size
                 end = min(self.total_size - 1, (i + 1) * part_size - 1)
-                w = ChunkWorker(self, i, start, end, self.save_path, proxy=self.proxy)
+                bind_ip = bonding_ips[i % len(bonding_ips)] if bonding_ips else None
+                w = ChunkWorker(self, i, start, end, self.save_path, proxy=self.proxy, bind_ip=bind_ip)
                 self.chunk_workers.append(w)
 
         self._executor = ThreadPoolExecutor(max_workers=self.num_threads)
@@ -492,6 +515,8 @@ class DownloadTask:
             "eta_fmt": f"{self.eta_seconds // 60}m {self.eta_seconds % 60}s" if self.eta_seconds > 60 else f"{self.eta_seconds}s",
             "num_threads": self.num_threads,
             "save_path": self.save_path,
+            "priority": self.priority,
+            "queue_position": self.queue_position,
             "sha256_hash": self.sha256_hash,
             "extracted_path": self.extracted_path,
             "antivirus_status": self.antivirus_status,
@@ -511,6 +536,30 @@ class ParvanEngine:
         self._load_saved_state()
         self._start_remote_sync_worker()
         self._start_scheduler_worker()
+        self._start_queue_manager_worker()
+
+    def _start_queue_manager_worker(self):
+        """Smart Queue Manager: regulates max concurrent downloads based on priority."""
+        def queue_loop():
+            while True:
+                try:
+                    max_concurrent = self.config.get("max_concurrent_downloads", 3)
+                    active_tasks = [t for t in self.tasks.values() if t.status == "downloading"]
+                    slots_available = max_concurrent - len(active_tasks)
+
+                    if slots_available > 0:
+                        # Find queued tasks sorted by priority (high=2, normal=1, low=0) then queue_position
+                        queued_tasks = [t for t in self.tasks.values() if t.status == "queued"]
+                        queued_tasks.sort(key=lambda x: (-x.priority, x.queue_position))
+
+                        for i in range(min(slots_available, len(queued_tasks))):
+                            queued_tasks[i].start()
+                except Exception:
+                    pass
+                time.sleep(1)
+
+        t = threading.Thread(target=queue_loop, daemon=True)
+        t.start()
 
     def _start_scheduler_worker(self):
         """Monitors scheduled start/stop hours and executes automatic power actions."""
@@ -735,6 +784,22 @@ class ParvanEngine:
                 }
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    def set_task_priority(self, task_id, priority):
+        """Sets task priority (0=low, 1=normal, 2=high)."""
+        if task_id in self.tasks:
+            self.tasks[task_id].priority = int(priority)
+            self.save_state()
+            return True
+        return False
+
+    def reorder_task_queue(self, task_id, new_position):
+        """Reorders task queue position for smart scheduler and prioritization."""
+        if task_id in self.tasks:
+            self.tasks[task_id].queue_position = int(new_position)
+            self.save_state()
+            return True
+        return False
 
     def add_download(self, url, num_threads=None, save_dir=None):
         threads = num_threads or self.config.get("default_threads", 16)

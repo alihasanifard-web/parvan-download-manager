@@ -201,7 +201,21 @@ class TestParvanDownloadEngine(unittest.TestCase):
         res = engine.sniff_media("https://example.com/not_a_video")
         self.assertIn("success", res)
 
-    def test_11_engine_telemetry_and_no_mock_auto_seed(self):
+    def test_11_network_bonding_and_queue_priority(self):
+        from engine import get_network_interfaces
+        ips = get_network_interfaces()
+        self.assertIsInstance(ips, list)
+
+        # Test queue priority and reordering
+        t = DownloadTask("test-priority-1", "http://example.com/file.bin", save_dir=self.test_dir)
+        engine.tasks[t.id] = t
+        self.assertTrue(engine.set_task_priority(t.id, 2))
+        self.assertEqual(engine.tasks[t.id].priority, 2)
+        self.assertTrue(engine.reorder_task_queue(t.id, 5))
+        self.assertEqual(engine.tasks[t.id].queue_position, 5)
+        del engine.tasks[t.id]
+
+    def test_12_engine_telemetry_and_no_mock_auto_seed(self):
         test_engine = ParvanEngine()
         # Verify engine does NOT auto-seed mock tasks if state is clean
         # or reflects only actual tasks

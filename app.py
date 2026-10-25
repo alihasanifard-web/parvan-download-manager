@@ -54,6 +54,16 @@ class ParvanJsApi:
         engine.save_state()
         return True
 
+    def set_priority(self, task_id, priority):
+        return engine.set_task_priority(task_id, priority)
+
+    def reorder_queue(self, task_id, new_pos):
+        return engine.reorder_task_queue(task_id, new_pos)
+
+    def get_network_interfaces(self):
+        from engine import get_network_interfaces
+        return get_network_interfaces()
+
     def update_settings(self, new_cfg):
         return engine.update_settings(new_cfg)
 
