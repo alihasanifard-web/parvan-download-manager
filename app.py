@@ -57,9 +57,22 @@ class ParvanJsApi:
     def update_settings(self, new_cfg):
         return engine.update_settings(new_cfg)
 
-    def set_speed_limit(self, limit_mb):
-        engine.set_speed_limit(limit_mb)
-        return True
+    def auto_extract(self, task_id):
+        if task_id in engine.tasks:
+            task = engine.tasks[task_id]
+            if task.status == "completed" and os.path.exists(task.save_path):
+                from engine import auto_extract_archive
+                success, path_or_err = auto_extract_archive(task.save_path)
+                return {"success": success, "path": path_or_err}
+        return {"success": False, "error": "Task not found or not completed"}
+
+    def get_file_checksum(self, task_id, algorithm="sha256"):
+        if task_id in engine.tasks:
+            task = engine.tasks[task_id]
+            if os.path.exists(task.save_path):
+                from engine import calculate_file_hash
+                return {"hash": calculate_file_hash(task.save_path, algorithm)}
+        return {"hash": ""}
 
     def open_folder(self, task_id):
         if task_id in engine.tasks:

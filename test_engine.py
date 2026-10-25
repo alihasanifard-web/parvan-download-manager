@@ -152,7 +152,32 @@ class TestParvanDownloadEngine(unittest.TestCase):
         with open(task.save_path, "rb") as f:
             self.assertEqual(f.read(), RangeTestHandler.DATA)
 
-    def test_05_engine_telemetry_and_no_mock_auto_seed(self):
+    def test_05_checksum_calculation(self):
+        from engine import calculate_file_hash
+        import hashlib
+        dummy_file = os.path.join(self.test_dir, "dummy_check.bin")
+        payload = b"Parvan Security and Checksum Validation 2026"
+        with open(dummy_file, "wb") as f:
+            f.write(payload)
+        
+        expected_sha = hashlib.sha256(payload).hexdigest()
+        calc_sha = calculate_file_hash(dummy_file, "sha256")
+        self.assertEqual(calc_sha, expected_sha)
+
+    def test_06_auto_extract_archive(self):
+        from engine import auto_extract_archive
+        import zipfile
+        zip_test_path = os.path.join(self.test_dir, "test_archive.zip")
+        with zipfile.ZipFile(zip_test_path, "w") as z:
+            z.writestr("hello.txt", "سلام از پروان دانلود منیجر")
+        
+        success, out_dir = auto_extract_archive(zip_test_path)
+        self.assertTrue(success)
+        self.assertTrue(os.path.exists(os.path.join(out_dir, "hello.txt")))
+        with open(os.path.join(out_dir, "hello.txt"), "r", encoding="utf-8") as f:
+            self.assertEqual(f.read(), "سلام از پروان دانلود منیجر")
+
+    def test_07_engine_telemetry_and_no_mock_auto_seed(self):
         test_engine = ParvanEngine()
         # Verify engine does NOT auto-seed mock tasks if state is clean
         # or reflects only actual tasks

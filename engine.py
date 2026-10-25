@@ -3,6 +3,8 @@ import sys
 import time
 import math
 import json
+import hashlib
+import zipfile
 import threading
 import urllib.request
 import urllib.parse
@@ -20,7 +22,13 @@ DEFAULT_CONFIG = {
     "speed_limit_mb": 150,
     "auto_resume": True,
     "sound_effects": True,
-    "language": "fa"
+    "language": "fa",
+    "auto_extract_archives": True,
+    "checksum_validation": True,
+    "scheduler_enabled": False,
+    "scheduler_start_time": "02:00",
+    "scheduler_stop_time": "07:00",
+    "scheduler_action": "none"  # none, shutdown, sleep
 }
 
 def load_config():
@@ -60,6 +68,34 @@ def detect_category(filename):
     elif ext in ['.mp4', '.mkv', '.avi', '.mov', '.mp3', '.flac']:
         return "media"
     return "other"
+
+def calculate_file_hash(file_path, algorithm="sha256"):
+    """Calculates SHA-256 or MD5 hash of a file efficiently in blocks."""
+    if not os.path.exists(file_path):
+        return ""
+    h = hashlib.sha256() if algorithm == "sha256" else hashlib.md5()
+    try:
+        with open(file_path, 'rb') as f:
+            while chunk := f.read(1024 * 1024):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return ""
+
+def auto_extract_archive(file_path):
+    """Auto-extracts zip archives into a dedicated folder next to the archive."""
+    if not os.path.exists(file_path):
+        return False, "فایل یافت نشد"
+    if not file_path.lower().endswith('.zip'):
+        return False, "فرمت آرشیو پشتیبانی نمی‌شود"
+    try:
+        dest_dir = os.path.splitext(file_path)[0] + "_extracted"
+        os.makedirs(dest_dir, exist_ok=True)
+        with zipfile.ZipFile(file_path, 'r') as z:
+            z.extractall(dest_dir)
+        return True, dest_dir
+    except Exception as e:
+        return False, str(e)
 
 class ChunkWorker:
     def __init__(self, task, chunk_id, start_byte, end_byte, file_path, proxy=None):
@@ -179,6 +215,8 @@ class DownloadTask:
         self.speed_bps = 0
         self.eta_seconds = 0
         self.created_at = time.time()
+        self.sha256_hash = ""
+        self.extracted_path = ""
         
         self.chunks = []
         self.chunk_workers = []
@@ -261,7 +299,10 @@ class DownloadTask:
                 self.chunk_workers.append(w)
 
         self._executor = ThreadPoolExecutor(max_workers=self.num_threads)
-        futures = [self._executor.submit(w.run) for w in self.chunk_workers]
+        futures = []
+        for w in self.chunk_workers:
+            if not self.is_paused:
+                futures.append(self._executor.submit(w.run))
 
         # Monitor loop
         while not self.is_paused and any(not f.done() for f in futures):
@@ -288,6 +329,23 @@ class DownloadTask:
             self.status = "completed"
             self.speed_bps = 0
             self.eta_seconds = 0
+
+            # Calculate SHA256 integrity hash if enabled
+            if engine.config.get("checksum_validation", True):
+                try:
+                    self.sha256_hash = calculate_file_hash(self.save_path, "sha256")
+                except Exception:
+                    pass
+
+            # Auto extract archive if enabled
+            if engine.config.get("auto_extract_archives", True) and self.category == "archive" and self.save_path.lower().endswith('.zip'):
+                try:
+                    success, res = auto_extract_archive(self.save_path)
+                    if success:
+                        self.extracted_path = res
+                except Exception:
+                    pass
+
             try:
                 engine.on_task_completed(self)
             except Exception:
@@ -299,7 +357,11 @@ class DownloadTask:
         for w in self.chunk_workers:
             w.stop()
         if self._executor:
-            self._executor.shutdown(wait=False)
+            try:
+                self._executor.shutdown(wait=False, cancel_futures=True)
+            except Exception:
+                pass
+            self._executor = None
 
     def resume(self):
         if self.status in ("paused", "error", "queued"):
@@ -333,6 +395,8 @@ class DownloadTask:
             "eta_fmt": f"{self.eta_seconds // 60}m {self.eta_seconds % 60}s" if self.eta_seconds > 60 else f"{self.eta_seconds}s",
             "num_threads": self.num_threads,
             "save_path": self.save_path,
+            "sha256_hash": self.sha256_hash,
+            "extracted_path": self.extracted_path,
             "chunks": chunks_info
         }
 
@@ -346,6 +410,48 @@ class ParvanEngine:
         self.notification_callback = None
         self._load_saved_state()
         self._start_remote_sync_worker()
+        self._start_scheduler_worker()
+
+    def _start_scheduler_worker(self):
+        """Monitors scheduled start/stop hours and executes automatic power actions."""
+        def scheduler_loop():
+            while True:
+                try:
+                    if self.config.get("scheduler_enabled", False):
+                        now_str = time.strftime("%H:%M")
+                        start_time = self.config.get("scheduler_start_time", "02:00")
+                        stop_time = self.config.get("scheduler_stop_time", "07:00")
+
+                        # Check if within download window
+                        if start_time <= stop_time:
+                            in_window = start_time <= now_str < stop_time
+                        else:  # Over midnight (e.g. 23:00 to 06:00)
+                            in_window = now_str >= start_time or now_str < stop_time
+
+                        if in_window:
+                            # Auto resume queued or paused downloads
+                            for t in self.tasks.values():
+                                if t.status in ("queued", "paused"):
+                                    t.resume()
+                        else:
+                            # Pause downloads when window ends
+                            for t in self.tasks.values():
+                                if t.status == "downloading":
+                                    t.pause()
+
+                            # Action on finish (shutdown/sleep) if configured
+                            action = self.config.get("scheduler_action", "none")
+                            if action == "shutdown":
+                                os.system("shutdown /s /t 60")
+                            elif action == "sleep":
+                                os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+
+                except Exception:
+                    pass
+                time.sleep(30)
+
+        t = threading.Thread(target=scheduler_loop, daemon=True)
+        t.start()
 
     def _start_remote_sync_worker(self):
         """Polls local Telegram Bot Bridge (port 9877) for pending remote download tasks."""
