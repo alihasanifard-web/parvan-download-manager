@@ -1044,8 +1044,13 @@
 
       <div class="modal-content">
         <div class="input-group">
-          <label class="input-label">آدرس لینک دانلود (URL)</label>
-          <input type="text" class="input-text" id="txtUrl" value="https://download.jetbrains.com/webstorm/WebStorm-2024.3.exe">
+          <label class="input-label">آدرس لینک دانلود (URL) یا لینک‌های چندتایی (دسته‌ای - خط به خط)</label>
+          <textarea class="input-text" id="txtUrl" style="height: 65px; resize: vertical; font-family: monospace;" placeholder="https://... یا magnet:?xt=..."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">کوکی یا توکن احراز هویت اختصاصی (اختیاری برای سایت‌های VIP / لاگین)</label>
+          <input type="text" class="input-text" id="txtCookie" placeholder="session_id=...; user_token=...">
         </div>
 
         <div class="input-group">
@@ -1650,16 +1655,29 @@
     });
 
     document.getElementById('btnConfirmDownload').addEventListener('click', async () => {
-      const url = document.getElementById('txtUrl').value.trim();
-      if (!url) return;
+      const urlText = document.getElementById('txtUrl').value.trim();
+      const cookies = document.getElementById('txtCookie') ? document.getElementById('txtCookie').value.trim() : "";
+      if (!urlText) return;
       playBeep(950, 0.1);
 
+      const lines = urlText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
       try {
-        await fetch(`${API_BASE}/add`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url, threads: selectedThreads })
-        });
+        if (lines.length > 1) {
+          // Batch download
+          await fetch(`${API_BASE}/batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: lines, threads: selectedThreads })
+          });
+        } else {
+          // Single download with optional cookies
+          await fetch(`${API_BASE}/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: lines[0], threads: selectedThreads, cookies: cookies })
+          });
+        }
       } catch (e) {
         console.log('Added offline or simulating');
       }

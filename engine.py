@@ -43,7 +43,9 @@ DEFAULT_CONFIG = {
     "max_concurrent_downloads": 3,
     "network_bonding_enabled": False,
     "bonded_interfaces": [],
-    "zero_copy_mmap": True
+    "zero_copy_mmap": True,
+    "custom_headers": {},
+    "cookies": ""
 }
 
 def load_config():
@@ -222,6 +224,17 @@ class ChunkWorker:
         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ParvanDownloadManager/3.0')
         req.add_header('Range', f'bytes={cur_start}-{self.end_byte}')
 
+        # Apply cookies if present in task or global config
+        cookie_header = getattr(self.task, "cookies", None) or engine.config.get("cookies", "")
+        if cookie_header:
+            req.add_header('Cookie', cookie_header)
+
+        # Apply custom authentication or headers
+        custom_hdrs = getattr(self.task, "headers", None) or engine.config.get("custom_headers", {})
+        if custom_hdrs and isinstance(custom_hdrs, dict):
+            for hk, hv in custom_hdrs.items():
+                req.add_header(hk, hv)
+
         opener = urllib.request.build_opener()
         if self.proxy:
             proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
@@ -294,12 +307,14 @@ class ChunkWorker:
 
 
 class DownloadTask:
-    def __init__(self, task_id, url, filename=None, save_dir=None, num_threads=16, proxy=None):
+    def __init__(self, task_id, url, filename=None, save_dir=None, num_threads=16, proxy=None, cookies=None, headers=None):
         self.id = str(task_id)
         self.url = url
         self.num_threads = num_threads
         self.proxy = proxy or "http://127.0.0.1:10808"
         self.save_dir = save_dir or os.path.join(os.path.expanduser("~"), "Downloads")
+        self.cookies = cookies
+        self.headers = headers or {}
         self.filename = filename or self._extract_filename()
         self.save_path = os.path.join(self.save_dir, self.filename)
         self.category = detect_category(self.filename)
@@ -465,6 +480,13 @@ class DownloadTask:
                     self.antivirus_status = scan_res.get("status", "clean")
                 except Exception:
                     self.antivirus_status = "skipped"
+
+            # Play completion sound if enabled
+            if engine.config.get("sound_effects", True):
+                try:
+                    engine.play_completion_sound()
+                except Exception:
+                    pass
 
             try:
                 engine.on_task_completed(self)
@@ -801,15 +823,38 @@ class ParvanEngine:
             return True
         return False
 
-    def add_download(self, url, num_threads=None, save_dir=None):
+    def play_completion_sound(self):
+        """Plays custom Parvan futuristic completion chime using Windows sound synthesis."""
+        def _play():
+            try:
+                import winsound
+                # Futuristic 3-tone chime (F#5, A5, C#6)
+                winsound.Beep(740, 100)
+                winsound.Beep(880, 120)
+                winsound.Beep(1108, 180)
+            except Exception:
+                pass
+        threading.Thread(target=_play, daemon=True).start()
+
+    def add_download(self, url, num_threads=None, save_dir=None, cookies=None, headers=None):
         threads = num_threads or self.config.get("default_threads", 16)
         sdir = save_dir or self.config.get("save_directory", os.path.join(os.path.expanduser("~"), "Downloads"))
         task_id = f"parvan-{int(time.time() * 1000)}"
-        task = DownloadTask(task_id, url, num_threads=threads, save_dir=sdir, proxy=self.proxy)
+        task = DownloadTask(task_id, url, num_threads=threads, save_dir=sdir, proxy=self.proxy, cookies=cookies, headers=headers)
         self.tasks[task_id] = task
         task.start()
         self.save_state()
         return task.to_dict()
+
+    def add_batch_downloads(self, urls, num_threads=None, save_dir=None):
+        """Adds a batch of URLs to the download queue."""
+        added = []
+        for u in urls:
+            u_clean = u.strip()
+            if u_clean and (u_clean.startswith("http://") or u_clean.startswith("https://") or u_clean.startswith("magnet:?")):
+                res = self.add_download(u_clean, num_threads=num_threads, save_dir=save_dir)
+                added.append(res)
+        return added
 
     def pause_download(self, task_id):
         if task_id in self.tasks:

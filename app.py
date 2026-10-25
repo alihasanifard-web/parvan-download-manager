@@ -28,8 +28,15 @@ class ParvanJsApi:
     def get_telemetry(self):
         return engine.get_telemetry()
 
-    def add_download(self, url, num_threads=16, save_dir=None):
-        return engine.add_download(url, num_threads=num_threads, save_dir=save_dir)
+    def add_download(self, url, num_threads=16, save_dir=None, cookies=None, headers=None):
+        return engine.add_download(url, num_threads=num_threads, save_dir=save_dir, cookies=cookies, headers=headers)
+
+    def add_batch_downloads(self, urls, num_threads=16, save_dir=None):
+        return engine.add_batch_downloads(urls, num_threads=num_threads, save_dir=save_dir)
+
+    def play_sound(self):
+        engine.play_completion_sound()
+        return True
 
     def pause_download(self, task_id):
         return engine.pause_download(task_id)
@@ -197,8 +204,15 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
         if parsed.path == '/api/add':
             url = req_data.get('url', '')
             threads = int(req_data.get('threads', 16))
+            cookies = req_data.get('cookies', None)
+            headers = req_data.get('headers', None)
             if url:
-                res = engine.add_download(url, num_threads=threads)
+                res = engine.add_download(url, num_threads=threads, cookies=cookies, headers=headers)
+        elif parsed.path == '/api/batch':
+            urls = req_data.get('urls', [])
+            threads = int(req_data.get('threads', 16))
+            if urls:
+                res = {"success": True, "tasks": engine.add_batch_downloads(urls, num_threads=threads)}
         elif parsed.path == '/api/pause':
             task_id = req_data.get('task_id', '')
             res = {"success": engine.pause_download(task_id)}

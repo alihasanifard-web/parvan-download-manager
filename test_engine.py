@@ -215,7 +215,34 @@ class TestParvanDownloadEngine(unittest.TestCase):
         self.assertEqual(engine.tasks[t.id].queue_position, 5)
         del engine.tasks[t.id]
 
-    def test_12_engine_telemetry_and_no_mock_auto_seed(self):
+    def test_12_batch_downloads_and_cookie_auth(self):
+        # 1. Test Batch Downloads
+        test_urls = [
+            f"http://127.0.0.1:{self.port}/test_payload.bin",
+            f"http://127.0.0.1:{self.port}/test_payload.bin"
+        ]
+        batch_res = engine.add_batch_downloads(test_urls, num_threads=2, save_dir=self.test_dir)
+        self.assertEqual(len(batch_res), 2)
+        for t in batch_res:
+            self.assertIn(t["id"], engine.tasks)
+            engine.delete_download(t["id"], remove_file=True)
+
+        # 2. Test Task with VIP Cookie & Custom Header
+        vip_task = DownloadTask(
+            task_id="vip-task",
+            url=f"http://127.0.0.1:{self.port}/test_payload.bin",
+            cookies="session_token=VIP_SECRET_USER_123; auth=true",
+            headers={"Authorization": "Bearer TOKEN_XYZ"},
+            save_dir=self.test_dir
+        )
+        self.assertEqual(vip_task.cookies, "session_token=VIP_SECRET_USER_123; auth=true")
+        self.assertEqual(vip_task.headers["Authorization"], "Bearer TOKEN_XYZ")
+
+    def test_13_completion_sound_trigger(self):
+        # Ensure audio sound method runs smoothly without exception
+        engine.play_completion_sound()
+
+    def test_14_engine_telemetry_and_no_mock_auto_seed(self):
         test_engine = ParvanEngine()
         # Verify engine does NOT auto-seed mock tasks if state is clean
         # or reflects only actual tasks
