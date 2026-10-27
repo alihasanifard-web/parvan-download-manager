@@ -38,6 +38,19 @@ except ImportError:
     WeeklySpeedScheduler = None
     QueueBackupManager = None
 
+try:
+    from hls_engine import HLSPlaylistParser, HLSStreamDownloader
+except ImportError:
+    HLSPlaylistParser = None
+    HLSStreamDownloader = None
+
+try:
+    from anti_dpi import CleanDNSResolver, AntiDPISocket, create_antidpi_connection
+except ImportError:
+    CleanDNSResolver = None
+    AntiDPISocket = None
+    create_antidpi_connection = None
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
@@ -64,7 +77,13 @@ DEFAULT_CONFIG = {
     "bonded_interfaces": [],
     "zero_copy_mmap": True,
     "custom_headers": {},
-    "cookies": ""
+    "cookies": "",
+    "anti_dpi_enabled": True,
+    "smart_folder_routing": True,
+    "dynamic_chunk_splitting": True,
+    "lan_remote_enabled": True,
+    "lan_remote_pin": "1234",
+    "clipboard_watcher_enabled": True
 }
 
 def load_config():
@@ -116,6 +135,20 @@ def detect_category(filename):
     elif ext in ['.mp4', '.mkv', '.avi', '.mov', '.mp3', '.flac']:
         return "media"
     return "other"
+
+def get_routed_save_dir(base_dir, category):
+    """Smart Folder Routing: routes downloads into organized subfolders by category."""
+    subdirs = {
+        "app": "Software",
+        "iso": "Disk_Images",
+        "archive": "Archives",
+        "media": "Videos",
+        "document": "Documents"
+    }
+    sub = subdirs.get(category)
+    if sub:
+        return os.path.join(base_dir, sub)
+    return base_dir
 
 def calculate_file_hash(file_path, algorithm="sha256"):
     """Calculates SHA-256 or MD5 hash of a file efficiently in blocks."""
@@ -342,9 +375,12 @@ class DownloadTask:
         self.cookies = cookies
         self.headers = headers or {}
         self.filename = filename or self._extract_filename()
-        self.save_path = os.path.join(self.save_dir, self.filename)
         self.category = detect_category(self.filename)
-        
+        # Smart Folder Routing
+        if not save_dir and hasattr(sys.modules[__name__], 'engine') and getattr(sys.modules[__name__].engine, 'config', {}).get('smart_folder_routing', False):
+            self.save_dir = get_routed_save_dir(self.save_dir, self.category)
+        self.save_path = os.path.join(self.save_dir, self.filename)
+
         self.total_size = 0
         self.downloaded_bytes = 0
         self.support_ranges = True
@@ -358,7 +394,8 @@ class DownloadTask:
         self.extracted_path = ""
         self.antivirus_status = "pending" # pending, clean, infected, skipped
         self.is_magnet = url.startswith("magnet:?")
-        self.is_media_stream = False
+        self.is_hls = ".m3u8" in url.lower() or "application/x-mpegurl" in url.lower()
+        self.is_media_stream = self.is_hls
         
         self.chunks = []
         self.chunk_workers = []
@@ -450,6 +487,27 @@ class DownloadTask:
                     pass
                 return
 
+        # Direct HLS / M3U8 Stream handling
+        if self.is_hls and HLSStreamDownloader is not None:
+            if not self.filename.endswith(".mp4"):
+                base_name = os.path.splitext(self.filename)[0]
+                self.filename = f"{base_name}.mp4"
+                self.save_path = os.path.join(self.save_dir, self.filename)
+            downloader = HLSStreamDownloader(self.url, self.save_path, max_threads=min(8, self.num_threads), proxy=self.proxy)
+            def _hls_progress(done_segs, tot_segs, bytes_dl):
+                self.downloaded_bytes = bytes_dl
+                if tot_segs > 0:
+                    self.total_size = max(bytes_dl, int(bytes_dl * (tot_segs / max(1, done_segs))))
+            success = downloader.download(progress_callback=_hls_progress)
+            if success:
+                self.status = "completed"
+                self.speed_bps = 0
+                try:
+                    engine.on_task_completed(self)
+                except Exception:
+                    pass
+                return
+
         if self.total_size <= 0:
             self.probe()
 
@@ -501,6 +559,29 @@ class DownloadTask:
                     self.eta_seconds = int(remaining_bytes / self.speed_bps)
                 else:
                     self.eta_seconds = 0
+
+                # Dynamic Chunk Splitting (Chunk Stealing)
+                if engine.config.get("dynamic_chunk_splitting", True) and self.total_size > 0 and (self.downloaded_bytes / self.total_size) >= 0.70:
+                    idle_workers = [w for w in self.chunk_workers if w.status == "done" and not getattr(w, "_split_parent", False)]
+                    active_workers = [w for w in self.chunk_workers if w.status == "active"]
+                    if idle_workers and active_workers:
+                        slowest = max(active_workers, key=lambda w: max(0, w.end_byte - (w.start_byte + w.downloaded)))
+                        cur_slow_start = slowest.start_byte + slowest.downloaded
+                        rem_slow = slowest.end_byte - cur_slow_start + 1
+                        if rem_slow >= 1024 * 512: # 512 KB minimum to split
+                            half = cur_slow_start + (rem_slow // 2)
+                            old_end = slowest.end_byte
+                            slowest.end_byte = half
+                            idle_w = idle_workers[0]
+                            idle_w.start_byte = half + 1
+                            idle_w.end_byte = old_end
+                            idle_w.total_bytes = old_end - (half + 1) + 1
+                            idle_w.downloaded = 0
+                            idle_w.status = "pending"
+                            idle_w._stop_flag = False
+                            idle_w._split_parent = True
+                            if self._executor:
+                                futures.append(self._executor.submit(idle_w.run))
 
         if self.is_paused:
             self.status = "paused"

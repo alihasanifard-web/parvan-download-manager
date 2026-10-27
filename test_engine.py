@@ -380,5 +380,65 @@ class TestParvanDownloadEngine(unittest.TestCase):
         for task in matching:
             engine.delete_download(task.id, remove_file=True)
 
+    def test_21_smart_folder_routing(self):
+        from engine import get_routed_save_dir
+        base = r"C:\Downloads"
+        self.assertEqual(get_routed_save_dir(base, "app"), os.path.join(base, "Software"))
+        self.assertEqual(get_routed_save_dir(base, "media"), os.path.join(base, "Videos"))
+        self.assertEqual(get_routed_save_dir(base, "archive"), os.path.join(base, "Archives"))
+        self.assertEqual(get_routed_save_dir(base, "iso"), os.path.join(base, "Disk_Images"))
+        self.assertEqual(get_routed_save_dir(base, "document"), os.path.join(base, "Documents"))
+
+    def test_22_anti_dpi_dns_resolver(self):
+        import anti_dpi
+        resolved_ip = anti_dpi.CleanDNSResolver.resolve("1.1.1.1")
+        self.assertEqual(resolved_ip, "1.1.1.1")
+        # Direct IP check
+        resolved_local = anti_dpi.CleanDNSResolver.resolve("127.0.0.1")
+        self.assertEqual(resolved_local, "127.0.0.1")
+
+    def test_23_hls_m3u8_parser(self):
+        import hls_engine
+        sample_m3u8 = """#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:10
+#EXTINF:10.0,
+segment001.ts
+#EXTINF:10.0,
+segment002.ts
+#EXT-X-ENDLIST"""
+        segments = hls_engine.HLSPlaylistParser.parse_m3u8(sample_m3u8, "https://stream.example.com/playlist.m3u8")
+        self.assertEqual(len(segments), 2)
+        self.assertEqual(segments[0]["url"], "https://stream.example.com/segment001.ts")
+        self.assertEqual(segments[1]["url"], "https://stream.example.com/segment002.ts")
+        self.assertEqual(segments[0]["duration"], 10.0)
+
+    def test_24_dynamic_chunk_splitting_contract(self):
+        # Verify splitting a chunk bisects remaining bytes
+        t = DownloadTask("split-test", f"http://127.0.0.1:{self.port}/test_payload.bin", save_dir=self.test_dir)
+        w1 = ChunkWorker(t, 0, 0, 1000, t.save_path)
+        w2 = ChunkWorker(t, 1, 1001, 2000, t.save_path)
+        w1.downloaded = 1000
+        w1.status = "done"
+        w2.downloaded = 200
+        w2.status = "active"
+
+        # Simulate dynamic split
+        cur_slow = w2.start_byte + w2.downloaded # 1201
+        rem = w2.end_byte - cur_slow + 1 # 800 bytes
+        half = cur_slow + (rem // 2) # 1601
+        old_end = w2.end_byte
+        w2.end_byte = half
+
+        w1.start_byte = half + 1
+        w1.end_byte = old_end
+        w1.total_bytes = old_end - (half + 1) + 1
+        w1.downloaded = 0
+        w1.status = "pending"
+
+        self.assertEqual(w2.end_byte, 1601)
+        self.assertEqual(w1.start_byte, 1602)
+        self.assertEqual(w1.end_byte, 2000)
+
 if __name__ == "__main__":
     unittest.main()

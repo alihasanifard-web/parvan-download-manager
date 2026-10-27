@@ -1144,6 +1144,42 @@
           <label class="input-label">آدرس پروکسی دستی (مثلاً http://127.0.0.1:10808)</label>
           <input type="text" class="input-text" id="settingCustomProxy" value="http://127.0.0.1:10808">
         </div>
+
+        <div style="margin-top: 18px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+          <div style="font-weight: 700; color: var(--cyan-neon); font-size: 0.85rem; margin-bottom: 12px;">قابلیت‌های پیشرفته و هوش دانلودی:</div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-main);">
+              <input type="checkbox" id="settingAntiDpi" checked>
+              <span>🛡️ موتور ضدتحریم و Anti-DPI</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-main);">
+              <input type="checkbox" id="settingFolderRouting" checked>
+              <span>📂 مسیردهی هوشمند پوشه‌ها</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-main);">
+              <input type="checkbox" id="settingChunkSplitting" checked>
+              <span>⚡ شکستن مجدد چانک‌های کند</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; cursor: pointer; color: var(--text-main);">
+              <input type="checkbox" id="settingClipboardWatcher" checked>
+              <span>📋 رصدگر هوشمند کلیپ‌بورد</span>
+            </label>
+          </div>
+
+          <div style="background: rgba(0, 245, 255, 0.05); border: 1px solid rgba(0, 245, 255, 0.2); border-radius: 8px; padding: 10px 14px; margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; cursor: pointer; color: var(--cyan-neon);">
+                <input type="checkbox" id="settingLanRemote" checked>
+                <span>📱 ریموت تحت شبکه محلی (LAN Web Dashboard)</span>
+              </label>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 0.78rem; color: var(--text-dim);">پین‌کد ورود:</span>
+                <input type="text" id="settingLanPin" value="1234" maxlength="8" style="width: 60px; padding: 2px 6px; text-align: center; background: #000; border: 1px solid var(--border-color); color: #00F5FF; border-radius: 4px; font-family: var(--font-mono); font-size: 0.8rem;">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="modal-bottom">
@@ -2006,6 +2042,12 @@
         settingProxyMode.value = cfg.proxy_mode || 'auto';
         document.getElementById('settingCustomProxy').value = cfg.custom_proxy || '';
         groupCustomProxy.style.display = cfg.proxy_mode === 'custom' ? 'flex' : 'none';
+        document.getElementById('settingAntiDpi').checked = cfg.anti_dpi_enabled !== false;
+        document.getElementById('settingFolderRouting').checked = cfg.smart_folder_routing !== false;
+        document.getElementById('settingChunkSplitting').checked = cfg.dynamic_chunk_splitting !== false;
+        document.getElementById('settingClipboardWatcher').checked = cfg.clipboard_watcher_enabled !== false;
+        document.getElementById('settingLanRemote').checked = cfg.lan_remote_enabled !== false;
+        document.getElementById('settingLanPin').value = cfg.lan_remote_pin || '1234';
       } catch(e) {}
     };
 
@@ -2022,7 +2064,13 @@
         save_directory: document.getElementById('settingSaveDir').value.trim(),
         default_threads: parseInt(document.getElementById('settingDefaultThreads').value),
         proxy_mode: settingProxyMode.value,
-        custom_proxy: document.getElementById('settingCustomProxy').value.trim()
+        custom_proxy: document.getElementById('settingCustomProxy').value.trim(),
+        anti_dpi_enabled: document.getElementById('settingAntiDpi').checked,
+        smart_folder_routing: document.getElementById('settingFolderRouting').checked,
+        dynamic_chunk_splitting: document.getElementById('settingChunkSplitting').checked,
+        clipboard_watcher_enabled: document.getElementById('settingClipboardWatcher').checked,
+        lan_remote_enabled: document.getElementById('settingLanRemote').checked,
+        lan_remote_pin: document.getElementById('settingLanPin').value.trim()
       };
       await fetch(`${API_BASE}/settings`, {
         method: 'POST',

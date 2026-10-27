@@ -113,11 +113,86 @@ class ParvanJsApi:
 
 
 # HTTP Request Handler for API & Static files
+PIN_LOGIN_HTML = """<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ورود به پروان ریموت | Parvan Remote</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+body { background: #030407; color: #f8fafc; font-family: 'Vazirmatn', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+.card { background: #080c14; border: 1px solid rgba(0, 245, 255, 0.3); border-radius: 14px; padding: 32px; width: 340px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.logo { font-size: 2rem; margin-bottom: 12px; }
+h2 { margin: 0 0 8px 0; font-size: 1.2rem; color: #00F5FF; }
+p { font-size: 0.82rem; color: #64748b; margin-bottom: 24px; line-height: 1.6; }
+input { width: 100%; box-sizing: border-box; background: #020306; border: 1px solid #1e293b; color: #00F5FF; font-size: 1.4rem; letter-spacing: 8px; text-align: center; padding: 12px; border-radius: 8px; outline: none; margin-bottom: 20px; font-family: monospace; }
+button { width: 100%; background: #00F5FF; color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s; }
+button:hover { background: #38bdf8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">⚡</div>
+  <h2>پروان ریموت تحت شبکه</h2>
+  <p>برای کنترل دانلودها از این دستگاه، پین‌کد امنیتی را وارد کنید:</p>
+  <input type="password" id="pinInput" maxlength="8" placeholder="••••" autofocus>
+  <button onclick="login()">ورود و اتصال</button>
+</div>
+<script>
+function login() {
+  const pin = document.getElementById('pinInput').value.trim();
+  if(!pin) return;
+  document.cookie = 'parvan_pin=' + pin + '; path=/; max-age=86400';
+  window.location.reload();
+}
+document.getElementById('pinInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') login(); });
+</script>
+</body>
+</html>
+"""
+
 class ParvanHttpHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=CURRENT_DIR, **kwargs)
 
+    def is_authenticated(self):
+        client_ip = self.client_address[0]
+        if client_ip in ("127.0.0.1", "localhost", "::1"):
+            return True
+        if not engine.config.get("lan_remote_enabled", True):
+            return False
+        pin = str(engine.config.get("lan_remote_pin", "1234")).strip()
+        if not pin:
+            return True
+        if self.headers.get("X-Parvan-Pin") == pin:
+            return True
+        parsed = urllib.parse.urlparse(self.path)
+        qs = urllib.parse.parse_qs(parsed.query)
+        if qs.get("pin", [""])[0] == pin:
+            return True
+        cookie_header = self.headers.get("Cookie", "")
+        if f"parvan_pin={pin}" in cookie_header:
+            return True
+        return False
+
     def do_GET(self):
+        if not self.is_authenticated():
+            parsed = urllib.parse.urlparse(self.path)
+            if parsed.path.startswith('/api/'):
+                self.send_response(401)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Unauthorized LAN access. Please enter PIN."}).encode('utf-8'))
+                return
+            elif parsed.path in ('/', '/index.html'):
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.end_headers()
+                self.wfile.write(PIN_LOGIN_HTML.encode('utf-8'))
+                return
+
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == '/api/telemetry':
             self.send_response(200)
@@ -228,6 +303,14 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if not self.is_authenticated():
+            self.send_response(401)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Unauthorized LAN access. Please enter PIN."}).encode('utf-8'))
+            return
+
         parsed = urllib.parse.urlparse(self.path)
         length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(length).decode('utf-8') if length > 0 else '{}'
@@ -441,9 +524,34 @@ def on_task_completed_notify(task):
         except Exception as e:
             print("[PARVAN NOTIFY] Error:", e)
 
+def start_clipboard_watcher():
+    """Smart Clipboard Watcher: monitors clipboard for download URLs and notifies user."""
+    import re
+    regex_filter = re.compile(r'^(?:https?://|magnet:\?)[^\s]+', re.IGNORECASE)
+    ext_filter = re.compile(r'\.(?:zip|rar|7z|tar|gz|bz2|xz|exe|msi|apk|dmg|iso|img|bin|mp4|mkv|avi|mov|mp3|flac|wav|pdf|docx?|xlsx?|m3u8)(?:\?.*)?$', re.IGNORECASE)
+    last_clip = ""
+    while True:
+        try:
+            if engine.config.get("clipboard_watcher_enabled", True):
+                clip = get_clipboard_url()
+                if clip and clip != last_clip:
+                    last_clip = clip
+                    if regex_filter.match(clip) and (ext_filter.search(clip) or clip.startswith("magnet:?") or ".m3u8" in clip):
+                        engine.config["_last_clipboard_candidate"] = clip
+                        global tray_icon
+                        if tray_icon:
+                            try:
+                                tray_icon.notify(f"لینک دانلود شناسایی شد:\n{clip[:50]}...", "⚡ پروان دانلود منیجر")
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+        time.sleep(1.2)
+
 def start_server(port=9876):
     try:
-        server = HTTPServer(('127.0.0.1', port), ParvanHttpHandler)
+        bind_host = '0.0.0.0' if engine.config.get("lan_remote_enabled", True) else '127.0.0.1'
+        server = HTTPServer((bind_host, port), ParvanHttpHandler)
         server.serve_forever()
     except Exception:
         pass
@@ -452,8 +560,12 @@ def main():
     port = 9876
     srv_thread = threading.Thread(target=start_server, args=(port,), daemon=True)
     srv_thread.start()
-    print(f"[PARVAN SERVER] Running on http://127.0.0.1:{port}")
+    print(f"[PARVAN SERVER] Running on port {port}")
     time.sleep(0.5)
+
+    # Start clipboard watcher
+    clip_thread = threading.Thread(target=start_clipboard_watcher, daemon=True)
+    clip_thread.start()
 
     # Register notification hook
     engine.notification_callback = on_task_completed_notify

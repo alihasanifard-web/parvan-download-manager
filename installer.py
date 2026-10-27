@@ -70,9 +70,9 @@ class ParvanInstallerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("برنامه نصب پروان دانلود منیجر | Setup Wizard")
-        self.geometry("560x420")
+        self.geometry("580x440")
         self.resizable(False, False)
-        self.configure(bg="#07090E")
+        self.configure(bg="#030407")
 
         # Set window icon if exists
         base_dir = get_base_dir()
@@ -83,6 +83,22 @@ class ParvanInstallerApp(tk.Tk):
             except Exception:
                 pass
 
+        # Configure custom ttk progress bar style
+        self.style = ttk.Style(self)
+        try:
+            self.style.theme_use('clam')
+        except Exception:
+            pass
+        self.style.configure(
+            "Parvan.Horizontal.TProgressbar",
+            troughcolor="#080c14",
+            background="#00F5FF",
+            bordercolor="#111827",
+            lightcolor="#00F5FF",
+            darkcolor="#00F5FF",
+            thickness=8
+        )
+
         default_dir = os.path.join(os.environ.get("LOCALAPPDATA", "C:\\"), "Programs", "ParvanDownloadManager")
         self.target_dir = tk.StringVar(value=default_dir)
         self.create_desktop_shortcut = tk.BooleanVar(value=True)
@@ -90,7 +106,7 @@ class ParvanInstallerApp(tk.Tk):
         self.auto_start = tk.BooleanVar(value=False)
         self.launch_after = tk.BooleanVar(value=True)
 
-        self.container = tk.Frame(self, bg="#07090E")
+        self.container = tk.Frame(self, bg="#030407")
         self.container.pack(fill="both", expand=True)
 
         self.load_logo()
@@ -112,88 +128,123 @@ class ParvanInstallerApp(tk.Tk):
         for widget in self.container.winfo_children():
             widget.destroy()
 
+    def render_step_bar(self, current_step=1):
+        step_bar = tk.Frame(self.container, bg="#060912", height=28)
+        step_bar.pack(fill="x", side="top")
+        steps = [
+            ("۱. معرفی", 1),
+            ("۲. مسیر نصب", 2),
+            ("۳. استخراج", 3),
+            ("۴. اتمام", 4)
+        ]
+        wrap = tk.Frame(step_bar, bg="#060912")
+        wrap.pack(anchor="center", pady=4)
+        for name, num in steps:
+            is_active = num == current_step
+            color = "#00F5FF" if is_active else "#475569"
+            weight = "bold" if is_active else "normal"
+            tk.Label(wrap, text=name, font=("Tahoma", 8, weight), fg=color, bg="#060912").pack(side="right", padx=10)
+            if num < 4:
+                tk.Label(wrap, text="‹", font=("Tahoma", 8), fg="#334155", bg="#060912").pack(side="right")
+
     def show_welcome_screen(self):
         self.clear_container()
+        self.render_step_bar(1)
 
         # Top Banner
-        header = tk.Frame(self.container, bg="#101626", height=90)
+        header = tk.Frame(self.container, bg="#090e1a", height=85)
         header.pack(fill="x", side="top")
 
         if self.logo_img:
-            lbl_logo = tk.Label(header, image=self.logo_img, bg="#101626")
+            lbl_logo = tk.Label(header, image=self.logo_img, bg="#090e1a")
             lbl_logo.pack(side="right", padx=20, pady=10)
 
-        title_box = tk.Frame(header, bg="#101626")
-        title_box.pack(side="right", padx=10, pady=18)
+        title_box = tk.Frame(header, bg="#090e1a")
+        title_box.pack(side="right", padx=10, pady=16)
 
-        lbl_t1 = tk.Label(title_box, text=APP_NAME_FA, font=("Tahoma", 13, "bold"), fg="#00F5FF", bg="#101626")
+        lbl_t1 = tk.Label(title_box, text=APP_NAME_FA, font=("Tahoma", 13, "bold"), fg="#00F5FF", bg="#090e1a")
         lbl_t1.pack(anchor="e")
-        lbl_t2 = tk.Label(title_box, text=f"Setup Wizard — v{VERSION}", font=("Segoe UI", 9), fg="#94A3B8", bg="#101626")
+        lbl_t2 = tk.Label(title_box, text=f"نسخه حرفه‌ای و ضدتحریم — v{VERSION}", font=("Segoe UI", 9), fg="#94A3B8", bg="#090e1a")
         lbl_t2.pack(anchor="e")
 
         # Body
-        body = tk.Frame(self.container, bg="#07090E", padx=30, pady=25)
+        body = tk.Frame(self.container, bg="#030407", padx=28, pady=18)
         body.pack(fill="both", expand=True)
 
         welcome_text = (
-            "به دستیار نصب پروان دانلود منیجر خوش آمدید.\n\n"
-            "این نرم‌افزار، قدرتمندترین ابزار دانلود چندکاناله برای ویندوز است\n"
-            "که سرعت دانلود شما را با ۱۶ الی ۳۲ کانکشن همزمان به اوج می‌رساند.\n\n"
-            "برای ادامه فرایند نصب روی دکمه «بعدی >» کلیک کنید."
+            "به دستیار نصب هوشمند پروان دانلود منیجر خوش آمدید.\n"
+            "نسل جدید دانلود چندکاناله با نهایت پایداری و کشش سرعت اینترنت:"
         )
-        lbl_desc = tk.Label(body, text=welcome_text, font=("Tahoma", 9), fg="#F3F4F6", bg="#07090E", justify="right")
-        lbl_desc.pack(anchor="e", pady=10)
+        lbl_desc = tk.Label(body, text=welcome_text, font=("Tahoma", 9), fg="#E2E8F0", bg="#030407", justify="right")
+        lbl_desc.pack(anchor="e", pady=(0, 10))
+
+        # Highlights Grid
+        grid_frame = tk.Frame(body, bg="#080c14", bd=1, relief="solid", padx=14, pady=10)
+        grid_frame.pack(fill="x", pady=6)
+
+        feats = [
+            ("⚡ دانلود ۳۲ کانکشن توربو", "تقسیم هوشمند چانک‌ها و تجمیع کارت‌های شبکه"),
+            ("🛡️ موتور ضدتحریم و Anti-DPI", "دور زدن اختلالات شبکه بدون نیاز به فیلترشکن"),
+            ("🎬 اسنیفر ویدیو و M3U8", "دریافت استریم‌های آنلاین با انتخاب کیفیت"),
+            ("🧲 موتور بومی تورنت و مگنت", "دانلود فایل‌های P2P و بیت‌تورنت بدون افت سرعت")
+        ]
+        for title, sub in feats:
+            row = tk.Frame(grid_frame, bg="#080c14")
+            row.pack(fill="x", pady=3)
+            tk.Label(row, text=title, font=("Tahoma", 8, "bold"), fg="#00F5FF", bg="#080c14").pack(side="right")
+            tk.Label(row, text=f"— {sub}", font=("Tahoma", 7), fg="#94A3B8", bg="#080c14").pack(side="right", padx=6)
 
         # Footer
-        footer = tk.Frame(self.container, bg="#0B0F19", height=55)
+        footer = tk.Frame(self.container, bg="#060912", height=50)
         footer.pack(fill="x", side="bottom")
 
-        btn_cancel = tk.Button(footer, text="انصراف", font=("Tahoma", 9), bg="#162035", fg="#F3F4F6", relief="flat", padx=16, pady=5, command=self.destroy)
-        btn_cancel.pack(side="left", padx=20, pady=12)
+        btn_cancel = tk.Button(footer, text="انصراف", font=("Tahoma", 9), bg="#1e293b", fg="#F3F4F6", relief="flat", padx=16, pady=5, command=self.destroy)
+        btn_cancel.pack(side="left", padx=20, pady=10)
 
-        btn_next = tk.Button(footer, text="بعدی >", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#07090E", relief="flat", padx=22, pady=5, command=self.show_directory_screen)
-        btn_next.pack(side="right", padx=20, pady=12)
+        btn_next = tk.Button(footer, text="بعدی >", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#030407", relief="flat", padx=22, pady=5, command=self.show_directory_screen)
+        btn_next.pack(side="right", padx=20, pady=10)
 
     def show_directory_screen(self):
         self.clear_container()
+        self.render_step_bar(2)
 
-        header = tk.Frame(self.container, bg="#101626", height=70)
+        header = tk.Frame(self.container, bg="#090e1a", height=70)
         header.pack(fill="x", side="top")
-        tk.Label(header, text="انتخاب مسیر نصب نرم‌افزار", font=("Tahoma", 11, "bold"), fg="#00F5FF", bg="#101626").pack(anchor="e", padx=25, pady=10)
-        tk.Label(header, text="پوشه‌ای که فایل‌های پروان دانلود منیجر در آن قرار می‌گیرد را مشخص کنید.", font=("Tahoma", 8), fg="#94A3B8", bg="#101626").pack(anchor="e", padx=25)
+        tk.Label(header, text="انتخاب مسیر نصب نرم‌افزار", font=("Tahoma", 11, "bold"), fg="#00F5FF", bg="#090e1a").pack(anchor="e", padx=25, pady=8)
+        tk.Label(header, text="پوشه‌ای که فایل‌های برنامه در آن نصب می‌شوند را تایید یا تغییر دهید.", font=("Tahoma", 8), fg="#94A3B8", bg="#090e1a").pack(anchor="e", padx=25)
 
-        body = tk.Frame(self.container, bg="#07090E", padx=25, pady=20)
+        body = tk.Frame(self.container, bg="#030407", padx=25, pady=20)
         body.pack(fill="both", expand=True)
 
-        tk.Label(body, text="مسیر نصب:", font=("Tahoma", 9, "bold"), fg="#F3F4F6", bg="#07090E").pack(anchor="e", pady=(0, 5))
-        
-        dir_frame = tk.Frame(body, bg="#07090E")
+        tk.Label(body, text="مسیر نصب در حافظه:", font=("Tahoma", 9, "bold"), fg="#E2E8F0", bg="#030407").pack(anchor="e", pady=(0, 5))
+
+        dir_frame = tk.Frame(body, bg="#030407")
         dir_frame.pack(fill="x", pady=5)
 
-        btn_browse = tk.Button(dir_frame, text="انتخاب...", font=("Tahoma", 8), bg="#162035", fg="#F3F4F6", relief="flat", padx=10, pady=4, command=self.browse_folder)
+        btn_browse = tk.Button(dir_frame, text="انتخاب...", font=("Tahoma", 8), bg="#1e293b", fg="#F3F4F6", relief="flat", padx=12, pady=4, command=self.browse_folder)
         btn_browse.pack(side="left")
 
-        entry_dir = tk.Entry(dir_frame, textvariable=self.target_dir, font=("Consolas", 9), bg="#101626", fg="#00F5FF", relief="solid", bd=1)
+        entry_dir = tk.Entry(dir_frame, textvariable=self.target_dir, font=("Consolas", 9), bg="#080c14", fg="#00F5FF", relief="solid", bd=1)
         entry_dir.pack(side="right", fill="x", expand=True, padx=(8, 0))
 
         # Checkboxes
-        opts_box = tk.LabelFrame(body, text="گزینه‌های تکمیلی", font=("Tahoma", 9), fg="#94A3B8", bg="#07090E", padx=12, pady=10)
-        opts_box.pack(fill="x", pady=20)
+        opts_box = tk.LabelFrame(body, text="گزینه‌های تکمیلی میانبرها", font=("Tahoma", 8), fg="#94A3B8", bg="#080c14", padx=12, pady=8)
+        opts_box.pack(fill="x", pady=16)
 
-        c1 = tk.Checkbutton(opts_box, text="ایجاد میانبر روی صفحه دسکتاپ (Desktop Shortcut)", variable=self.create_desktop_shortcut, font=("Tahoma", 8), fg="#F3F4F6", bg="#07090E", selectcolor="#101626", activebackground="#07090E")
+        c1 = tk.Checkbutton(opts_box, text="ایجاد میانبر دسکتاپ (Desktop Shortcut)", variable=self.create_desktop_shortcut, font=("Tahoma", 8), fg="#F3F4F6", bg="#080c14", selectcolor="#030407", activebackground="#080c14")
         c1.pack(anchor="e", pady=2)
-        c2 = tk.Checkbutton(opts_box, text="افزودن به منوی استارت ویندوز (Start Menu)", variable=self.create_start_shortcut, font=("Tahoma", 8), fg="#F3F4F6", bg="#07090E", selectcolor="#101626", activebackground="#07090E")
+        c2 = tk.Checkbutton(opts_box, text="افزودن به منوی استارت ویندوز (Start Menu)", variable=self.create_start_shortcut, font=("Tahoma", 8), fg="#F3F4F6", bg="#080c14", selectcolor="#030407", activebackground="#080c14")
         c2.pack(anchor="e", pady=2)
 
         # Footer
-        footer = tk.Frame(self.container, bg="#0B0F19", height=55)
+        footer = tk.Frame(self.container, bg="#060912", height=50)
         footer.pack(fill="x", side="bottom")
 
-        btn_back = tk.Button(footer, text="< قبلی", font=("Tahoma", 9), bg="#162035", fg="#F3F4F6", relief="flat", padx=16, pady=5, command=self.show_welcome_screen)
-        btn_back.pack(side="right", padx=5, pady=12)
+        btn_back = tk.Button(footer, text="< قبلی", font=("Tahoma", 9), bg="#1e293b", fg="#F3F4F6", relief="flat", padx=16, pady=5, command=self.show_welcome_screen)
+        btn_back.pack(side="right", padx=5, pady=10)
 
-        btn_install = tk.Button(footer, text="شروع نصب", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#07090E", relief="flat", padx=22, pady=5, command=self.start_installation)
-        btn_install.pack(side="right", padx=15, pady=12)
+        btn_install = tk.Button(footer, text="شروع نصب", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#030407", relief="flat", padx=22, pady=5, command=self.start_installation)
+        btn_install.pack(side="right", padx=15, pady=10)
 
     def browse_folder(self):
         chosen = filedialog.askdirectory(initialdir=self.target_dir.get(), title="انتخاب پوشه نصب پروان")
@@ -202,18 +253,19 @@ class ParvanInstallerApp(tk.Tk):
 
     def start_installation(self):
         self.clear_container()
+        self.render_step_bar(3)
 
-        header = tk.Frame(self.container, bg="#101626", height=70)
+        header = tk.Frame(self.container, bg="#090e1a", height=70)
         header.pack(fill="x", side="top")
-        tk.Label(header, text="در حال نصب پروان دانلود منیجر...", font=("Tahoma", 11, "bold"), fg="#00F5FF", bg="#101626").pack(anchor="e", padx=25, pady=12)
+        tk.Label(header, text="در حال نصب پروان دانلود منیجر...", font=("Tahoma", 11, "bold"), fg="#00F5FF", bg="#090e1a").pack(anchor="e", padx=25, pady=12)
 
-        body = tk.Frame(self.container, bg="#07090E", padx=30, pady=40)
+        body = tk.Frame(self.container, bg="#030407", padx=30, pady=40)
         body.pack(fill="both", expand=True)
 
-        self.lbl_status = tk.Label(body, text="آماده‌سازی فایل‌های برنامه...", font=("Tahoma", 9), fg="#94A3B8", bg="#07090E")
+        self.lbl_status = tk.Label(body, text="آماده‌سازی فایل‌های برنامه...", font=("Tahoma", 9), fg="#94A3B8", bg="#030407")
         self.lbl_status.pack(anchor="e", pady=8)
 
-        self.pbar = ttk.Progressbar(body, orient="horizontal", mode="determinate", length=480)
+        self.pbar = ttk.Progressbar(body, orient="horizontal", mode="determinate", length=480, style="Parvan.Horizontal.TProgressbar")
         self.pbar.pack(fill="x", pady=10)
 
         self.after(200, self.perform_unpack)
@@ -226,7 +278,6 @@ class ParvanInstallerApp(tk.Tk):
         try:
             os.makedirs(target, exist_ok=True)
             if not os.path.exists(payload_zip):
-                # Search parent or current dir
                 payload_zip = os.path.join(os.path.dirname(base_dir), "app_payload.zip")
 
             with zipfile.ZipFile(payload_zip, 'r') as z:
@@ -263,37 +314,39 @@ class ParvanInstallerApp(tk.Tk):
 
     def show_finish_screen(self):
         self.clear_container()
+        self.render_step_bar(4)
 
-        header = tk.Frame(self.container, bg="#101626", height=80)
+        header = tk.Frame(self.container, bg="#090e1a", height=80)
         header.pack(fill="x", side="top")
 
         if self.logo_img:
-            lbl_logo = tk.Label(header, image=self.logo_img, bg="#101626")
+            lbl_logo = tk.Label(header, image=self.logo_img, bg="#090e1a")
             lbl_logo.pack(side="right", padx=20, pady=10)
 
-        title_box = tk.Frame(header, bg="#101626")
+        title_box = tk.Frame(header, bg="#090e1a")
         title_box.pack(side="right", padx=10, pady=15)
-        tk.Label(title_box, text="نصب با موفقیت پایان یافت!", font=("Tahoma", 12, "bold"), fg="#10B981", bg="#101626").pack(anchor="e")
-        tk.Label(title_box, text="Parvan Download Manager has been installed.", font=("Segoe UI", 9), fg="#94A3B8", bg="#101626").pack(anchor="e")
+        tk.Label(title_box, text="نصب با موفقیت پایان یافت!", font=("Tahoma", 12, "bold"), fg="#10B981", bg="#090e1a").pack(anchor="e")
+        tk.Label(title_box, text="Parvan Download Manager is ready to launch.", font=("Segoe UI", 9), fg="#94A3B8", bg="#090e1a").pack(anchor="e")
 
-        body = tk.Frame(self.container, bg="#07090E", padx=30, pady=30)
+        body = tk.Frame(self.container, bg="#030407", padx=30, pady=25)
         body.pack(fill="both", expand=True)
 
         msg = (
-            "برنامه پروان دانلود منیجر با موفقیت روی سیستم شما نصب و آماده استفاده شد.\n\n"
-            "• میانبر برنامه روی دسکتاپ و منوی استارت ایجاد گردید.\n"
-            "• افزونه مرورگر در پوشه browser-extension جهت اتصال به کروم و اج موجود است.\n"
+            "برنامه پروان دانلود منیجر با موفقیت روی سیستم شما نصب گردید.\n\n"
+            "✓ موتور ضدتحریم و Anti-DPI فعال است.\n"
+            "✓ ریموت تحت شبکه محلی آماده به کار می‌باشد.\n"
+            "✓ میانبرهای دسترسی سریع روی دسکتاپ و استارت منو ایجاد شد.\n"
         )
-        tk.Label(body, text=msg, font=("Tahoma", 9), fg="#F3F4F6", bg="#07090E", justify="right").pack(anchor="e", pady=10)
+        tk.Label(body, text=msg, font=("Tahoma", 9), fg="#E2E8F0", bg="#030407", justify="right").pack(anchor="e", pady=8)
 
-        c_launch = tk.Checkbutton(body, text="اجرای پروان دانلود منیجر (Launch now)", variable=self.launch_after, font=("Tahoma", 9, "bold"), fg="#00F5FF", bg="#07090E", selectcolor="#101626", activebackground="#07090E")
-        c_launch.pack(anchor="e", pady=15)
+        c_launch = tk.Checkbutton(body, text="اجرای فوری پروان دانلود منیجر (Launch now)", variable=self.launch_after, font=("Tahoma", 9, "bold"), fg="#00F5FF", bg="#030407", selectcolor="#080c14", activebackground="#030407")
+        c_launch.pack(anchor="e", pady=12)
 
-        footer = tk.Frame(self.container, bg="#0B0F19", height=55)
+        footer = tk.Frame(self.container, bg="#060912", height=50)
         footer.pack(fill="x", side="bottom")
 
-        btn_finish = tk.Button(footer, text="پایان (Finish)", font=("Tahoma", 9, "bold"), bg="#10B981", fg="#07090E", relief="flat", padx=26, pady=5, command=self.finish_installation)
-        btn_finish.pack(side="right", padx=20, pady=12)
+        btn_finish = tk.Button(footer, text="پایان و خروج", font=("Tahoma", 9, "bold"), bg="#10B981", fg="#030407", relief="flat", padx=26, pady=5, command=self.finish_installation)
+        btn_finish.pack(side="right", padx=20, pady=10)
 
     def finish_installation(self):
         if self.launch_after.get():
