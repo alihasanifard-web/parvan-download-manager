@@ -30,7 +30,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "download_media" && request.url) {
     chrome.storage.local.get(["threads"], (res) => {
-      sendToParvan(request.url, res.threads || 16, request.title || "");
+      sendToParvan(request.url, res.threads || 16, request.title || "", request.quality || "best");
     });
     sendResponse({ status: "sent" });
   }
@@ -67,7 +67,7 @@ chrome.downloads.onCreated.addListener(async (downloadItem) => {
 });
 
 // Function to send download task to Parvan API
-async function sendToParvan(url, threads = 16, filename = "") {
+async function sendToParvan(url, threads = 16, filename = "", quality = "best") {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2500);
@@ -75,7 +75,7 @@ async function sendToParvan(url, threads = 16, filename = "") {
     const response = await fetch(`${API_BASE}/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, threads, filename }),
+      body: JSON.stringify({ url, threads, filename, quality }),
       signal: controller.signal
     });
     clearTimeout(timeoutId);

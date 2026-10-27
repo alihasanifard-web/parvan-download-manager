@@ -896,6 +896,13 @@
             </div>
             <span class="badge-count" id="countApp">۰</span>
           </li>
+          <li class="nav-link" data-cat="media">
+            <div class="nav-link-right">
+              <span style="color: #ec4899;">●</span>
+              <span>ویدیو و رسانه (Media)</span>
+            </div>
+            <span class="badge-count" id="countMedia">۰</span>
+          </li>
           <li class="nav-link" data-cat="iso">
             <div class="nav-link-right">
               <span style="color: var(--violet-neon);">●</span>
@@ -974,7 +981,10 @@
               <span class="legend-bullet" style="background: var(--emerald-neon);"></span>
               <span>ورودی اینترنت</span>
             </div>
-            <span style="color: var(--text-dim); font-size: 0.68rem;">زنده (Live Telemetry)</span>
+            <div style="margin-right: auto; display: flex; gap: 6px; align-items: center;">
+              <button id="btnChartLive" style="background: rgba(0,245,255,0.15); border: 1px solid var(--cyan-neon); color: var(--cyan-neon); border-radius: 4px; padding: 2px 8px; font-size: 0.68rem; cursor: pointer;">زنده</button>
+              <button id="btnChart24h" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-dim); border-radius: 4px; padding: 2px 8px; font-size: 0.68rem; cursor: pointer;">روند ۲۴ ساعته</button>
+            </div>
           </div>
           <canvas id="dualSpeedChart"></canvas>
         </div>
@@ -1007,6 +1017,19 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             پاکسازی تکمیل‌شده‌ها
+          </button>
+          <button class="btn-pill" id="btnExportQueue" title="خروجی گرفتن از صف به فرمت JSON">
+            📤 خروجی صف
+          </button>
+          <button class="btn-pill" id="btnImportQueue" title="ورودی گرفتن فایل پشتیبان صف">
+            📥 ورودی صف
+          </button>
+          <input type="file" id="fileImportQueue" accept=".json" style="display: none;">
+          <button class="btn-pill" id="btnSiteLogins" title="مدیریت اکانت‌ها و هدرهای VIP سایت‌ها">
+            🔑 سایت‌های VIP
+          </button>
+          <button class="btn-pill" id="btnWeeklySchedule" title="جدول زمان‌بندی هفتگی پهنای باند">
+            📅 جدول سرعت
           </button>
         </div>
 
@@ -1164,6 +1187,133 @@
     </div>
   </div>
 
+  <!-- Modal: Refresh Expired URL -->
+  <div class="modal-overlay" id="modalRefresh">
+    <div class="modal-box" style="width: 580px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--amber-neon);">🔄</span>
+          <span>تجدید آدرس دانلود منقضی‌شده (Refresh URL)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnCloseRefresh">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 20px;">
+        <input type="hidden" id="refreshTaskId">
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 14px;">
+          اگر لینک دانلود موقت یا منقضی شده است، آدرس جدید را وارد کنید تا دانلود بدون سوختن حجم قبلی از همان نقطه ادامه یابد:
+        </div>
+        <label style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-main);">آدرس جدید لینک دانلود (New URL):</label>
+        <input type="text" class="input-styled" id="inputRefreshUrl" placeholder="https://..." style="width: 100%; direction: ltr; margin-bottom: 14px;">
+
+        <label style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-main);">کوکی یا هدر احراز هویت جدید (اختیاری):</label>
+        <input type="text" class="input-styled" id="inputRefreshCookie" placeholder="session=... یا Bearer ..." style="width: 100%; direction: ltr; margin-bottom: 20px;">
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn-pill" id="btnCancelRefresh">انصراف</button>
+          <button class="btn-pill" id="btnSubmitRefresh" style="background: var(--cyan-neon); color: #000; font-weight: 700;">
+            ✓ ذخیره و ادامه دانلود
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Site Logins & VIP Vault -->
+  <div class="modal-overlay" id="modalSiteLogins">
+    <div class="modal-box" style="width: 640px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--cyan-neon);">🔑</span>
+          <span>مدیریت اکانت‌ها و هدرهای VIP سایت‌ها (VIP Vault)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnCloseSiteLogins">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 20px;">
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px;">
+          دامنه و کوکی‌های سایت‌های نیازمند حساب VIP را تعریف کنید تا تمام دانلودهای آن دامنه به صورت خودکار با اکانت شما دانلود شوند:
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">دامنه سایت (Domain):</label>
+            <input type="text" class="input-styled" id="inputVipDomain" placeholder="soft98.ir یا rapidgator.net" style="width: 100%; direction: ltr;">
+          </div>
+          <div>
+            <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">هدر Authorization (اختیاری):</label>
+            <input type="text" class="input-styled" id="inputVipAuth" placeholder="Bearer eyJ... یا Basic ..." style="width: 100%; direction: ltr;">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 4px;">کوکی‌های حساب کاربری (Cookies):</label>
+          <input type="text" class="input-styled" id="inputVipCookie" placeholder="user_id=123; session_token=xyz..." style="width: 100%; direction: ltr;">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+          <button class="btn-pill" id="btnAddSiteLogin" style="background: var(--cyan-neon); color: #000; font-weight: 700;">+ افزودن اکانت سایت</button>
+        </div>
+
+        <div style="font-size: 0.82rem; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">اکانت‌های ثبت‌شده:</div>
+        <div id="siteLoginsList" style="max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px;">
+          <div style="color: var(--text-dim); text-align: center; padding: 16px; font-size: 0.8rem;">در حال بارگذاری...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Weekly Bandwidth Schedule Matrix -->
+  <div class="modal-overlay" id="modalWeeklyMatrix">
+    <div class="modal-box" style="width: 600px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--emerald-neon);">📅</span>
+          <span>جدول زمان‌بندی هفتگی پهنای باند (Weekly Speed Matrix)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnCloseWeeklyMatrix">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 20px;">
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px;">
+          سرعت دانلود را بر اساس ساعات روز کنترل کنید تا در ساعات کاری پینگ اینترنت و وب‌گردی دچار اختلال نشود:
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 14px;">
+            <div style="font-weight: 700; color: var(--emerald-neon); font-size: 0.9rem; margin-bottom: 6px;">
+              🌙 بازه دانلود شبانه رایگان (۲ تا ۷ صبح)
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.82rem; color: var(--text-muted);">سقف سرعت این بازه:</span>
+              <span style="color: var(--emerald-neon); font-weight: 700; font-family: var(--font-mono);">نامحدود (حداکثر کشش خط)</span>
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 245, 255, 0.08); border: 1px solid rgba(0, 245, 255, 0.3); border-radius: 8px; padding: 14px;">
+            <div style="font-weight: 700; color: var(--cyan-neon); font-size: 0.9rem; margin-bottom: 6px;">
+              ☀️ بازه اداری و وب‌گردی روزانه (۸ صبح تا ۱۱ شب)
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.82rem; color: var(--text-muted);">سقف سرعت محدودکننده:</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <input type="number" id="inputWorkSpeedLimit" value="5" min="1" max="150" style="width: 70px; padding: 4px 8px; background: #000; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; font-family: var(--font-mono); text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--text-dim);">MB/s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.84rem;">
+            <input type="checkbox" id="chkWeeklyEnabled" checked>
+            <span>فعال‌سازی هوشمند جدول زمان‌بندی</span>
+          </label>
+          <button class="btn-pill" id="btnSaveWeeklyMatrix" style="background: var(--emerald-neon); color: #000; font-weight: 700;">
+            ✓ ذخیره تنظیمات زمان‌بندی
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Real-time Animation & Logic -->
   <script>
     // Sound Synthesizer Effects
@@ -1199,11 +1349,61 @@
 
     let curDownload = 72.4;
     let curLineMbps = 610;
+    let chartViewMode = 'live'; // 'live' or '24h'
+
+    // 24-Hour Trend History (hourly slots: 0 to 23)
+    const trend24hHistory = new Array(24).fill(0).map((_, i) => ({
+      hour: (new Date().getHours() - 23 + i + 24) % 24,
+      speed: Math.max(0, 15 + Math.sin(i / 3) * 12 + ((i % 5) * 3))
+    }));
+
+    function recordHourlyTrend(speed) {
+      const currentHour = new Date().getHours();
+      const last = trend24hHistory[trend24hHistory.length - 1];
+      if (last && last.hour === currentHour) {
+        last.speed = Math.max(last.speed, speed);
+      } else {
+        trend24hHistory.shift();
+        trend24hHistory.push({ hour: currentHour, speed: speed });
+      }
+    }
+
+    const btnChartLive = document.getElementById('btnChartLive');
+    const btnChart24h = document.getElementById('btnChart24h');
+
+    if (btnChartLive && btnChart24h) {
+      btnChartLive.onclick = () => {
+        chartViewMode = 'live';
+        btnChartLive.style.background = 'rgba(0,245,255,0.15)';
+        btnChartLive.style.borderColor = 'var(--cyan-neon)';
+        btnChartLive.style.color = 'var(--cyan-neon)';
+        btnChart24h.style.background = 'transparent';
+        btnChart24h.style.borderColor = 'var(--border-color)';
+        btnChart24h.style.color = 'var(--text-dim)';
+        drawChart();
+      };
+
+      btnChart24h.onclick = () => {
+        chartViewMode = '24h';
+        btnChart24h.style.background = 'rgba(0,245,255,0.15)';
+        btnChart24h.style.borderColor = 'var(--cyan-neon)';
+        btnChart24h.style.color = 'var(--cyan-neon)';
+        btnChartLive.style.background = 'transparent';
+        btnChartLive.style.borderColor = 'var(--border-color)';
+        btnChartLive.style.color = 'var(--text-dim)';
+        drawChart();
+      };
+    }
 
     function drawChart() {
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
+
+      if (chartViewMode === '24h') {
+        draw24hTrendChart(w, h);
+        return;
+      }
 
       const maxVal = 120;
       const step = w / (points - 1);
@@ -1251,6 +1451,64 @@
       ctx.shadowBlur = 8;
       ctx.stroke();
       ctx.shadowBlur = 0;
+    }
+
+    function draw24hTrendChart(w, h) {
+      const data = trend24hHistory;
+      const maxSpeed = Math.max(...data.map(d => d.speed), 30);
+      const step = w / (data.length - 1);
+
+      // Grid lines & labels
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 3; i++) {
+        const y = h * (i / 3) * 0.8 + 10;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Fill area under 24h curve
+      ctx.beginPath();
+      ctx.moveTo(0, h - 20);
+      for (let i = 0; i < data.length; i++) {
+        const x = i * step;
+        const y = h - 20 - (data[i].speed / maxSpeed) * (h - 40);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h - 20);
+      ctx.closePath();
+      const grad24 = ctx.createLinearGradient(0, 0, 0, h);
+      grad24.addColorStop(0, 'rgba(0, 245, 255, 0.4)');
+      grad24.addColorStop(1, 'rgba(0, 245, 255, 0.02)');
+      ctx.fillStyle = grad24;
+      ctx.fill();
+
+      // Trend Line
+      ctx.beginPath();
+      for (let i = 0; i < data.length; i++) {
+        const x = i * step;
+        const y = h - 20 - (data[i].speed / maxSpeed) * (h - 40);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#00F5FF';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(0, 245, 255, 0.9)';
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Draw Hour Markers
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '9px monospace';
+      ctx.textAlign = 'center';
+      for (let i = 0; i < data.length; i += 3) {
+        const x = i * step;
+        const label = `${String(data[i].hour).padStart(2, '0')}:00`;
+        ctx.fillText(label, x, h - 5);
+      }
     }
 
     // Backend Communication Bridge
@@ -1353,6 +1611,8 @@
       lineHistory.shift();
       lineHistory.push(curLineMbps > 0 ? (curLineMbps / 8) : 0);
 
+      recordHourlyTrend(curDownload);
+
       drawChart();
 
       allTasksCache = data.tasks || [];
@@ -1366,6 +1626,7 @@
       const completedCount = tasks.filter(t => t.status === 'completed').length;
       const scheduledCount = tasks.filter(t => t.status === 'queued').length;
       const appCount = tasks.filter(t => t.category === 'app').length;
+      const mediaCount = tasks.filter(t => t.category === 'media').length;
       const isoCount = tasks.filter(t => t.category === 'iso').length;
       const archiveCount = tasks.filter(t => t.category === 'archive').length;
 
@@ -1374,6 +1635,8 @@
       document.getElementById('countCompleted').textContent = completedCount;
       document.getElementById('countScheduled').textContent = scheduledCount;
       document.getElementById('countApp').textContent = appCount;
+      const elMedia = document.getElementById('countMedia');
+      if (elMedia) elMedia.textContent = mediaCount;
       document.getElementById('countIso').textContent = isoCount;
       document.getElementById('countArchive').textContent = archiveCount;
     }
@@ -1483,6 +1746,11 @@
                 </button>
               ` : ''}
               ${!isDone ? `
+                <button class="btn-circle btn-task-refresh" data-id="${t.id}" data-url="${t.url}" title="🔄 تجدید آدرس دانلود (Refresh URL)" style="color: var(--amber-neon); border-color: rgba(251, 191, 36, 0.4);">
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
                 <button class="btn-circle btn-task-toggle" data-id="${t.id}" data-status="${t.status}" title="${isDownloading ? 'توقف موقت' : 'ادامه دانلود'}">
                   ${isDownloading ? 
                     '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6"/></svg>' : 
@@ -1576,6 +1844,19 @@
           player.load();
           document.getElementById('modalPreview').classList.add('show');
           playBeep(850, 0.06);
+        };
+      });
+
+      // Refresh URL button
+      document.querySelectorAll('.btn-task-refresh').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          const currentUrl = btn.getAttribute('data-url') || '';
+          document.getElementById('refreshTaskId').value = id;
+          document.getElementById('inputRefreshUrl').value = currentUrl;
+          document.getElementById('modalRefresh').classList.add('show');
+          playBeep(700, 0.05);
         };
       });
 
@@ -1779,6 +2060,178 @@
           body: JSON.stringify({ task_id: currentPreviewTaskId })
         }).catch(()=>{});
       }
+    };
+
+    // Refresh URL Modal Logic
+    const modalRefresh = document.getElementById('modalRefresh');
+    document.getElementById('btnCloseRefresh').onclick = () => modalRefresh.classList.remove('show');
+    document.getElementById('btnCancelRefresh').onclick = () => modalRefresh.classList.remove('show');
+    document.getElementById('btnSubmitRefresh').onclick = async () => {
+      const taskId = document.getElementById('refreshTaskId').value;
+      const newUrl = document.getElementById('inputRefreshUrl').value.trim();
+      const newCookie = document.getElementById('inputRefreshCookie').value.trim();
+      if (!newUrl) return;
+
+      playBeep(900, 0.08);
+      await fetch(`${API_BASE}/task/refresh_url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId, new_url: newUrl, cookies: newCookie })
+      }).catch(()=>{});
+
+      modalRefresh.classList.remove('show');
+      fetchTelemetry();
+    };
+
+    // Queue Export & Import
+    document.getElementById('btnExportQueue').onclick = () => {
+      playBeep(800, 0.05);
+      window.open(`${API_BASE}/queue/export`, '_blank');
+    };
+
+    const fileImportQueue = document.getElementById('fileImportQueue');
+    document.getElementById('btnImportQueue').onclick = () => {
+      fileImportQueue.click();
+    };
+
+    fileImportQueue.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const payload = JSON.parse(evt.target.result);
+          playBeep(850, 0.08);
+          const res = await fetch(`${API_BASE}/queue/import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const ret = await res.json();
+          alert(`صف دانلود با موفقیت ایمپورت شد! (${ret.imported_count || 0} تسک اضافه شد)`);
+          fetchTelemetry();
+        } catch (err) {
+          alert('خطا در خواندن فایل JSON صف دانلود.');
+        }
+      };
+      reader.readAsText(file);
+      fileImportQueue.value = '';
+    };
+
+    // Site Logins (VIP Vault) Modal
+    const modalSiteLogins = document.getElementById('modalSiteLogins');
+    document.getElementById('btnSiteLogins').onclick = async () => {
+      playBeep(700, 0.05);
+      modalSiteLogins.classList.add('show');
+      loadSiteLoginsList();
+    };
+
+    document.getElementById('btnCloseSiteLogins').onclick = () => modalSiteLogins.classList.remove('show');
+
+    async function loadSiteLoginsList() {
+      const listEl = document.getElementById('siteLoginsList');
+      try {
+        const res = await fetch(`${API_BASE}/site_logins`);
+        const logins = await res.json();
+        const domains = Object.keys(logins);
+        if (domains.length === 0) {
+          listEl.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 16px; font-size: 0.8rem;">هیچ اکانت VIP ثبت نشده است.</div>';
+          return;
+        }
+        listEl.innerHTML = domains.map(d => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 6px;">
+            <div>
+              <div style="font-weight: 700; color: var(--cyan-neon); font-size: 0.85rem;">${d}</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">${logins[d].cookies ? 'کوکی فعال' : 'هدر Authorization'}</div>
+            </div>
+            <button class="btn-pill" onclick="deleteSiteLogin('${d}')" style="background: rgba(239,68,68,0.2); border: 1px solid #ef4444; color: #f87171; padding: 2px 10px; font-size: 0.72rem;">حذف</button>
+          </div>
+        `).join('');
+      } catch(e) {
+        listEl.innerHTML = '<div style="color: #f87171; text-align: center; padding: 12px;">خطا در دریافت لیست</div>';
+      }
+    }
+
+    window.deleteSiteLogin = async (domain) => {
+      await fetch(`${API_BASE}/site_logins/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain })
+      }).catch(()=>{});
+      loadSiteLoginsList();
+    };
+
+    document.getElementById('btnAddSiteLogin').onclick = async () => {
+      const domain = document.getElementById('inputVipDomain').value.trim();
+      const cookies = document.getElementById('inputVipCookie').value.trim();
+      const auth = document.getElementById('inputVipAuth').value.trim();
+      if (!domain) {
+        alert('لطفاً نام دامنه را وارد کنید.');
+        return;
+      }
+      playBeep(850, 0.06);
+      await fetch(`${API_BASE}/site_logins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain, cookies, auth_header: auth })
+      }).catch(()=>{});
+
+      document.getElementById('inputVipDomain').value = '';
+      document.getElementById('inputVipCookie').value = '';
+      document.getElementById('inputVipAuth').value = '';
+      loadSiteLoginsList();
+    };
+
+    // Weekly Bandwidth Schedule Modal
+    const modalWeeklyMatrix = document.getElementById('modalWeeklyMatrix');
+    document.getElementById('btnWeeklySchedule').onclick = async () => {
+      playBeep(700, 0.05);
+      modalWeeklyMatrix.classList.add('show');
+      try {
+        const res = await fetch(`${API_BASE}/schedule_matrix`);
+        const sched = await res.json();
+        document.getElementById('chkWeeklyEnabled').checked = sched.enabled !== false;
+        const workRule = (sched.rules || []).find(r => r.id === 'day_work');
+        if (workRule) {
+          document.getElementById('inputWorkSpeedLimit').value = workRule.speed_limit_mb || 5;
+        }
+      } catch(e) {}
+    };
+
+    document.getElementById('btnCloseWeeklyMatrix').onclick = () => modalWeeklyMatrix.classList.remove('show');
+
+    document.getElementById('btnSaveWeeklyMatrix').onclick = async () => {
+      playBeep(900, 0.08);
+      const enabled = document.getElementById('chkWeeklyEnabled').checked;
+      const workLimit = parseInt(document.getElementById('inputWorkSpeedLimit').value) || 5;
+
+      const rules = [
+        {
+          id: "night_unlimited",
+          name: "دانلود شبانه رایگان",
+          days: [0, 1, 2, 3, 4, 5, 6],
+          start_hour: 2,
+          end_hour: 7,
+          speed_limit_mb: 0
+        },
+        {
+          id: "day_work",
+          name: "مصرف بهینه روزانه",
+          days: [0, 1, 2, 3, 4, 5, 6],
+          start_hour: 8,
+          end_hour: 23,
+          speed_limit_mb: workLimit
+        }
+      ];
+
+      await fetch(`${API_BASE}/schedule_matrix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled, rules })
+      }).catch(()=>{});
+
+      modalWeeklyMatrix.classList.remove('show');
+      alert('جدول زمان‌بندی هفتگی با موفقیت به‌روزرسانی و فعال شد.');
     };
 
     // Keyboard shortcut (Ctrl + N or Ctrl + K for new download)

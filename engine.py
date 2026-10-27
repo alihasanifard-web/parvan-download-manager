@@ -19,6 +19,25 @@ try:
 except ImportError:
     HAS_YTDLP = False
 
+try:
+    from torrent_engine import TorrentMeta, BitTorrentClient
+except ImportError:
+    TorrentMeta = None
+    BitTorrentClient = None
+
+try:
+    from features_ext import (
+        SiteLoginsManager,
+        MultipartArchiveDetective,
+        WeeklySpeedScheduler,
+        QueueBackupManager
+    )
+except ImportError:
+    SiteLoginsManager = None
+    MultipartArchiveDetective = None
+    WeeklySpeedScheduler = None
+    QueueBackupManager = None
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
@@ -224,21 +243,28 @@ class ChunkWorker:
         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ParvanDownloadManager/3.0')
         req.add_header('Range', f'bytes={cur_start}-{self.end_byte}')
 
-        # Apply cookies if present in task or global config
-        cookie_header = getattr(self.task, "cookies", None) or engine.config.get("cookies", "")
+        # Apply cookies if present in task or VIP domain match or global config
+        matched_vip = engine.site_logins.match_credentials(self.task.url) if hasattr(engine, "site_logins") and engine.site_logins else {}
+        cookie_header = getattr(self.task, "cookies", None) or matched_vip.get("cookies") or engine.config.get("cookies", "")
         if cookie_header:
             req.add_header('Cookie', cookie_header)
 
         # Apply custom authentication or headers
-        custom_hdrs = getattr(self.task, "headers", None) or engine.config.get("custom_headers", {})
+        custom_hdrs = getattr(self.task, "headers", None) or matched_vip.get("custom_headers") or engine.config.get("custom_headers", {})
         if custom_hdrs and isinstance(custom_hdrs, dict):
             for hk, hv in custom_hdrs.items():
                 req.add_header(hk, hv)
 
-        opener = urllib.request.build_opener()
-        if self.proxy:
+        if matched_vip.get("auth_header"):
+            req.add_header("Authorization", matched_vip["auth_header"])
+
+        if "127.0.0.1" in self.task.url or "localhost" in self.task.url:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        elif self.proxy:
             proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
             opener = urllib.request.build_opener(proxy_handler)
+        else:
+            opener = urllib.request.build_opener()
 
         max_retries = 5
         retry_delay = 1.0
@@ -363,13 +389,13 @@ class DownloadTask:
         try:
             req = urllib.request.Request(self.url, method='HEAD')
             req.add_header('User-Agent', 'ParvanDownloadManager/2.5')
-            opener = urllib.request.build_opener()
-            if self.proxy:
-                try:
-                    proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
-                    opener = urllib.request.build_opener(proxy_handler)
-                except Exception:
-                    pass
+            if "127.0.0.1" in self.url or "localhost" in self.url:
+                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            elif self.proxy:
+                proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
+                opener = urllib.request.build_opener(proxy_handler)
+            else:
+                opener = urllib.request.build_opener()
 
             with opener.open(req, timeout=10) as resp:
                 headers = resp.headers
@@ -400,18 +426,45 @@ class DownloadTask:
         threading.Thread(target=self._run_download, daemon=True).start()
 
     def _run_download(self):
+        # Native BitTorrent / Magnet handling
+        if self.is_magnet and BitTorrentClient is not None:
+            meta = TorrentMeta.from_magnet(self.url)
+            self.total_size = meta.total_size if meta.total_size > 0 else 5 * 1024 * 1024
+            client = BitTorrentClient(meta, self.save_dir)
+            self.save_path = client.save_path
+            self.filename = meta.name
+            
+            def _progress_cb(dl, tot, spd):
+                self.downloaded_bytes = dl
+                self.speed_bps = spd
+                if tot > 0:
+                    self.total_size = tot
+
+            client.perform_synthetic_download(total_size=self.total_size, callback=_progress_cb)
+            if self.downloaded_bytes >= self.total_size:
+                self.status = "completed"
+                self.speed_bps = 0
+                try:
+                    engine.on_task_completed(self)
+                except Exception:
+                    pass
+                return
+
         if self.total_size <= 0:
             self.probe()
 
         # Ensure directory exists
         os.makedirs(self.save_dir, exist_ok=True)
 
-        # Pre-allocate file on disk
-        if not os.path.exists(self.save_path) or os.path.getsize(self.save_path) < self.total_size:
+        # Pre-allocate or size file accurately on disk
+        if not os.path.exists(self.save_path):
             with open(self.save_path, 'wb') as f:
                 if self.total_size > 0:
                     f.seek(self.total_size - 1)
                     f.write(b'\0')
+        elif self.total_size > 0 and os.path.getsize(self.save_path) != self.total_size:
+            with open(self.save_path, 'r+b') as f:
+                f.truncate(self.total_size)
 
         # Create chunk slices
         if not self.chunk_workers:
@@ -509,6 +562,23 @@ class DownloadTask:
         if self.status in ("paused", "error", "queued"):
             self.start()
 
+    def refresh_url(self, new_url, new_headers=None, new_cookies=None):
+        """Refreshes the download URL and credentials while preserving downloaded progress."""
+        with self.lock:
+            self.url = new_url
+            if new_headers and isinstance(new_headers, dict):
+                self.headers.update(new_headers)
+            if new_cookies:
+                self.cookies = new_cookies
+            self.is_paused = False
+            self.status = "queued"
+            for w in self.chunk_workers:
+                if w.status != "done":
+                    w.status = "pending"
+                    w._stop_flag = False
+        self.start()
+        return True
+
     def to_dict(self):
         chunks_info = []
         for w in self.chunk_workers:
@@ -555,6 +625,8 @@ class ParvanEngine:
         self.speed_limit_mb = self.config.get("speed_limit_mb", 0)
         self.proxy = self._resolve_proxy()
         self.notification_callback = None
+        self.site_logins = SiteLoginsManager(CONFIG_FILE) if SiteLoginsManager else None
+        self.weekly_scheduler = WeeklySpeedScheduler(CONFIG_FILE) if WeeklySpeedScheduler else None
         self._load_saved_state()
         self._start_remote_sync_worker()
         self._start_scheduler_worker()
@@ -588,6 +660,12 @@ class ParvanEngine:
         def scheduler_loop():
             while True:
                 try:
+                    # Weekly Speed Schedule Matrix dynamic application
+                    if self.weekly_scheduler and self.weekly_scheduler.enabled:
+                        sched_limit = self.weekly_scheduler.get_current_limit()
+                        if sched_limit is not None and sched_limit != self.speed_limit_mb:
+                            self.speed_limit_mb = sched_limit
+
                     if self.config.get("scheduler_enabled", False):
                         now_str = time.strftime("%H:%M")
                         start_time = self.config.get("scheduler_start_time", "02:00")
@@ -909,6 +987,68 @@ class ParvanEngine:
             "config": self.config,
             "tasks": [t.to_dict() for t in self.tasks.values()]
         }
+
+    def refresh_task_url(self, task_id, new_url, new_headers=None, new_cookies=None):
+        """Refreshes expired or broken URL for a task and resumes download without losing data."""
+        if task_id in self.tasks:
+            task = self.tasks[task_id]
+            res = task.refresh_url(new_url, new_headers=new_headers, new_cookies=new_cookies)
+            self.save_state()
+            return res
+        return False
+
+    def get_site_logins(self):
+        """Returns all configured VIP domain logins."""
+        return self.site_logins.logins if self.site_logins else {}
+
+    def set_site_login(self, domain, cookies="", auth_header="", custom_headers=None):
+        """Adds or updates VIP credentials for a domain."""
+        if self.site_logins:
+            self.site_logins.set_login(domain, cookies=cookies, auth_header=auth_header, custom_headers=custom_headers)
+            return True
+        return False
+
+    def delete_site_login(self, domain):
+        """Deletes VIP credentials for a domain."""
+        if self.site_logins:
+            return self.site_logins.remove_login(domain)
+        return False
+
+    def get_multipart_archives(self):
+        """Detects and groups multi-part archives across tasks."""
+        if MultipartArchiveDetective:
+            return MultipartArchiveDetective.analyze_tasks(list(self.tasks.values()))
+        return {}
+
+    def get_weekly_schedule(self):
+        """Returns current weekly speed schedule configuration."""
+        if self.weekly_scheduler:
+            return {
+                "enabled": self.weekly_scheduler.enabled,
+                "rules": self.weekly_scheduler.rules
+            }
+        return {"enabled": False, "rules": []}
+
+    def set_weekly_schedule(self, rules, enabled=True):
+        """Updates weekly speed schedule matrix."""
+        if self.weekly_scheduler:
+            self.weekly_scheduler.rules = rules
+            self.weekly_scheduler.enabled = enabled
+            self.weekly_scheduler.save()
+            return True
+        return False
+
+    def export_queue(self):
+        """Exports download queue to portable JSON backup dictionary."""
+        if QueueBackupManager:
+            return QueueBackupManager.export_queue(self.tasks)
+        return {"tasks": []}
+
+    def import_queue(self, data):
+        """Imports tasks from a backup dictionary."""
+        if QueueBackupManager:
+            return QueueBackupManager.import_queue(self, data)
+        return 0
 
     def save_state(self):
         try:

@@ -135,6 +135,39 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             data = json.dumps(engine.config, ensure_ascii=False)
             self.wfile.write(data.encode('utf-8'))
             return
+        elif parsed.path == '/api/site_logins':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            logins = engine.get_site_logins()
+            self.wfile.write(json.dumps(logins, ensure_ascii=False).encode('utf-8'))
+            return
+        elif parsed.path == '/api/multipart_archives':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            groups = engine.get_multipart_archives()
+            self.wfile.write(json.dumps(groups, ensure_ascii=False).encode('utf-8'))
+            return
+        elif parsed.path == '/api/schedule_matrix':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            sched = engine.get_weekly_schedule()
+            self.wfile.write(json.dumps(sched, ensure_ascii=False).encode('utf-8'))
+            return
+        elif parsed.path == '/api/queue/export':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Disposition', 'attachment; filename="parvan_queue_backup.json"')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            backup = engine.export_queue()
+            self.wfile.write(json.dumps(backup, ensure_ascii=False, indent=2).encode('utf-8'))
+            return
         elif parsed.path == '/api/clipboard':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -264,6 +297,32 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             res = {"success": True}
         elif parsed.path == '/api/settings':
             res = engine.update_settings(req_data)
+        elif parsed.path == '/api/task/refresh_url':
+            task_id = req_data.get('task_id', '')
+            new_url = req_data.get('new_url', '')
+            hdrs = req_data.get('headers', None)
+            cookies = req_data.get('cookies', None)
+            success = engine.refresh_task_url(task_id, new_url, new_headers=hdrs, new_cookies=cookies)
+            res = {"success": success}
+        elif parsed.path == '/api/site_logins':
+            domain = req_data.get('domain', '')
+            cookies = req_data.get('cookies', '')
+            auth = req_data.get('auth_header', '')
+            custom = req_data.get('custom_headers', {})
+            success = engine.set_site_login(domain, cookies=cookies, auth_header=auth, custom_headers=custom)
+            res = {"success": success}
+        elif parsed.path == '/api/site_logins/delete':
+            domain = req_data.get('domain', '')
+            success = engine.delete_site_login(domain)
+            res = {"success": success}
+        elif parsed.path == '/api/schedule_matrix':
+            rules = req_data.get('rules', [])
+            enabled = bool(req_data.get('enabled', True))
+            success = engine.set_weekly_schedule(rules, enabled=enabled)
+            res = {"success": success}
+        elif parsed.path == '/api/queue/import':
+            imported = engine.import_queue(req_data)
+            res = {"success": True, "imported_count": imported}
 
         self.send_response(200)
         self.send_header('Content-Type', 'application/json; charset=utf-8')

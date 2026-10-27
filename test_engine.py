@@ -251,5 +251,134 @@ class TestParvanDownloadEngine(unittest.TestCase):
         self.assertIn("tasks", telemetry)
         self.assertIsInstance(telemetry["tasks"], list)
 
+    def test_15_refresh_expired_url(self):
+        old_url = f"http://127.0.0.1:{self.port}/expired_link_token_1.bin"
+        new_url = f"http://127.0.0.1:{self.port}/test_payload.bin"
+        t = DownloadTask("task-refresh-test", old_url, save_dir=self.test_dir)
+        t.status = "error"
+        t.downloaded_bytes = 1024
+        t.total_size = 2048
+        engine.tasks[t.id] = t
+
+        # Refresh with fresh URL and cookie
+        success = engine.refresh_task_url(
+            t.id,
+            new_url=new_url,
+            new_cookies="token=fresh_vip_456",
+            new_headers={"Authorization": "Bearer FRESH_SECRET"}
+        )
+        self.assertTrue(success)
+        self.assertEqual(engine.tasks[t.id].url, new_url)
+        self.assertEqual(engine.tasks[t.id].cookies, "token=fresh_vip_456")
+        self.assertEqual(engine.tasks[t.id].headers.get("Authorization"), "Bearer FRESH_SECRET")
+        self.assertIn(engine.tasks[t.id].status, ["queued", "downloading", "completed"])
+        del engine.tasks[t.id]
+
+    def test_16_real_bittorrent_and_magnet_engine(self):
+        import torrent_engine
+        # 1. Bencode codec verification
+        sample_dict = {"announce": "http://tracker.com/announce", "info": {"length": 1048576, "name": "ubuntu.iso"}}
+        enc = torrent_engine.Bencode.encode(sample_dict)
+        dec, _ = torrent_engine.Bencode.decode(enc)
+        self.assertEqual(dec["announce"], b"http://tracker.com/announce")
+        self.assertEqual(dec["info"]["length"], 1048576)
+
+        # 2. Magnet Parsing
+        mag = "magnet:?xt=urn:btih:d2474e86c95b19b8bcfdb92bc12c9d44667cfa36&dn=ParvanLinux&tr=http%3A%2F%2Ftracker.org%2Fann"
+        meta = torrent_engine.TorrentMeta.from_magnet(mag)
+        self.assertEqual(meta.hex_hash, "d2474e86c95b19b8bcfdb92bc12c9d44667cfa36")
+        self.assertEqual(meta.name, "ParvanLinux")
+
+        # 3. BitTorrent client disk block assembler test
+        client = torrent_engine.BitTorrentClient(meta, self.test_dir)
+        client.perform_synthetic_download(total_size=128 * 1024)
+        self.assertTrue(os.path.exists(client.save_path))
+        self.assertEqual(os.path.getsize(client.save_path), 128 * 1024)
+
+    def test_17_site_logins_manager(self):
+        # 1. Set login for domain
+        self.assertTrue(engine.set_site_login("soft98.ir", cookies="vip_session=SECRET_999", auth_header="Bearer VIP_KEY"))
+        logins = engine.get_site_logins()
+        self.assertIn("soft98.ir", logins)
+
+        # 2. Match credentials against subdomain
+        matched = engine.site_logins.match_credentials("https://dl2.soft98.ir/apps/setup.zip")
+        self.assertEqual(matched.get("cookies"), "vip_session=SECRET_999")
+        self.assertEqual(matched.get("auth_header"), "Bearer VIP_KEY")
+
+        # 3. Cleanup
+        self.assertTrue(engine.delete_site_login("soft98.ir"))
+        self.assertNotIn("soft98.ir", engine.get_site_logins())
+
+    def test_18_multipart_archive_detective(self):
+        from features_ext import MultipartArchiveDetective
+        class MockTask:
+            def __init__(self, tid, fn, st):
+                self.id = tid
+                self.filename = fn
+                self.status = st
+                self.downloaded_bytes = 1000
+                self.total_size = 1000
+
+        mock_tasks = [
+            MockTask("m1", "Office_2026.part1.rar", "completed"),
+            MockTask("m2", "Office_2026.part2.rar", "completed"),
+            MockTask("m3", "Office_2026.part4.rar", "downloading"),
+        ]
+
+        analysis = MultipartArchiveDetective.analyze_tasks(mock_tasks)
+        self.assertIn("Office_2026", analysis)
+        grp = analysis["Office_2026"]
+        self.assertEqual(grp["missing_parts"], [3])
+        self.assertFalse(grp["is_complete_set"])
+
+        # Complete with part 3
+        mock_tasks.append(MockTask("m4", "Office_2026.part3.rar", "completed"))
+        analysis2 = MultipartArchiveDetective.analyze_tasks(mock_tasks)
+        self.assertEqual(analysis2["Office_2026"]["missing_parts"], [])
+        self.assertTrue(analysis2["Office_2026"]["is_complete_set"])
+
+    def test_19_weekly_speed_scheduler_matrix(self):
+        import datetime
+        rules = [
+            {"id": "test_night", "days": [0, 1, 2, 3, 4, 5, 6], "start_hour": 2, "end_hour": 7, "speed_limit_mb": 0},
+            {"id": "test_day", "days": [0, 1, 2, 3, 4, 5, 6], "start_hour": 8, "end_hour": 23, "speed_limit_mb": 10}
+        ]
+        self.assertTrue(engine.set_weekly_schedule(rules, enabled=True))
+
+        sched_info = engine.get_weekly_schedule()
+        self.assertTrue(sched_info["enabled"])
+        self.assertEqual(len(sched_info["rules"]), 2)
+
+        # Test limit computation
+        dt_night = datetime.datetime(2026, 10, 27, 4, 30)
+        dt_day = datetime.datetime(2026, 10, 27, 15, 0)
+        self.assertEqual(engine.weekly_scheduler.get_current_limit(dt_night), 0)
+        self.assertEqual(engine.weekly_scheduler.get_current_limit(dt_day), 10)
+
+    def test_20_export_import_queue(self):
+        # Create a test task
+        t = DownloadTask("backup-task-1", f"http://127.0.0.1:{self.port}/test_payload.bin", save_dir=self.test_dir)
+        engine.tasks[t.id] = t
+
+        # Export
+        backup = engine.export_queue()
+        self.assertIn("tasks", backup)
+        self.assertGreaterEqual(len(backup["tasks"]), 1)
+        self.assertEqual(backup["app"], "Parvan Download Manager")
+
+        # Clear and Import
+        del engine.tasks[t.id]
+        imported_count = engine.import_queue(backup)
+        self.assertGreaterEqual(imported_count, 1)
+
+        # Verify task is restored in queue
+        matching = [task for task in engine.tasks.values() if task.url == t.url]
+        self.assertTrue(len(matching) > 0)
+
+        # Cleanup
+        for task in matching:
+            engine.delete_download(task.id, remove_file=True)
+
 if __name__ == "__main__":
     unittest.main()

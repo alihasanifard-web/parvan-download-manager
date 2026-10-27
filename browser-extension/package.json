@@ -1,0 +1,26 @@
+{
+  "name": "parvan-browser-extension",
+  "version": "1.0.0",
+  "description": "Parvan Download Manager Browser Extension - Official Chrome/Edge Extension",
+  "main": "background.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:fast": "node --test tests/extension.node.test.js",
+    "test:ui": "npx playwright test --ui",
+    "test:headed": "npx playwright test --headed"
+  },
+  "keywords": [
+    "parvan",
+    "download-manager",
+    "browser-extension",
+    "chrome-extension",
+    "edge-extension"
+  ],
+  "author": "Parvan Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "playwright": "^1.64.1"
+  }
+}
