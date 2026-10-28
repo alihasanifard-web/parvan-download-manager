@@ -243,6 +243,53 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             backup = engine.export_queue()
             self.wfile.write(json.dumps(backup, ensure_ascii=False, indent=2).encode('utf-8'))
             return
+        elif parsed.path == '/api/stream/video':
+            qs = urllib.parse.parse_qs(parsed.query)
+            task_id = qs.get('task_id', [''])[0]
+            if task_id in engine.tasks:
+                task = engine.tasks[task_id]
+                file_path = task.save_path
+                if os.path.exists(file_path):
+                    file_size = os.path.getsize(file_path)
+                    range_header = self.headers.get('Range')
+                    start = 0
+                    end = file_size - 1
+
+                    if range_header and range_header.startswith('bytes='):
+                        ranges = range_header.replace('bytes=', '').split('-')
+                        start = int(ranges[0]) if ranges[0] else 0
+                        end = int(ranges[1]) if len(ranges) > 1 and ranges[1] else file_size - 1
+
+                    length = end - start + 1
+                    self.send_response(206 if range_header else 200)
+                    self.send_header('Content-Type', 'video/mp4')
+                    self.send_header('Accept-Ranges', 'bytes')
+                    self.send_header('Content-Range', f'bytes {start}-{end}/{file_size}')
+                    self.send_header('Content-Length', str(length))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+
+                    with open(file_path, 'rb') as f:
+                        f.seek(start)
+                        remaining = length
+                        while remaining > 0:
+                            chunk = f.read(min(remaining, 65536))
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                            remaining -= len(chunk)
+                    return
+            self.send_response(404)
+            self.end_headers()
+            return
+        elif parsed.path == '/api/quota':
+            res = engine.quota_limiter.check_quota_status() if engine.quota_limiter else {}
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode('utf-8'))
+            return
         elif parsed.path == '/api/site_grabber':
             qs = urllib.parse.parse_qs(parsed.query)
             target_url = qs.get('url', [''])[0]
@@ -397,6 +444,18 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
                     t.pause()
             engine.save_state()
             res = {"success": True}
+        elif parsed.path == '/api/quota/update':
+            daily = req_data.get('daily_limit_bytes', 0)
+            monthly = req_data.get('monthly_limit_bytes', 0)
+            action = req_data.get('action_on_limit', 'throttle')
+            speed = req_data.get('throttle_speed_kb', 50)
+            success = engine.update_quota_settings(daily, monthly, action, speed)
+            res = {"success": success}
+        elif parsed.path == '/api/shell/register':
+            from windows_tray import WindowsShellIntegration
+            exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
+            success = WindowsShellIntegration.register_context_menu(exe_path)
+            res = {"success": success}
         elif parsed.path == '/api/delete':
             task_id = req_data.get('task_id', '')
             remove_file = bool(req_data.get('remove_file', False))

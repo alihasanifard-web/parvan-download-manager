@@ -95,9 +95,21 @@ try:
 except ImportError:
     VirtualSparseMount = None
 
+try:
+    from quota_limiter import QuotaLimiter
+except ImportError:
+    QuotaLimiter = None
+
+try:
+    from windows_tray import WindowsToastNotifier, WindowsShellIntegration
+except ImportError:
+    WindowsToastNotifier = None
+    WindowsShellIntegration = None
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
+QUOTA_FILE = os.path.join(CURRENT_DIR, "quota_state.json")
 
 DEFAULT_CONFIG = {
     "save_directory": os.path.join(os.path.expanduser("~"), "Downloads"),
@@ -767,6 +779,7 @@ class ParvanEngine:
         self.site_logins = SiteLoginsManager(CONFIG_FILE) if SiteLoginsManager else None
         self.weekly_scheduler = WeeklySpeedScheduler(CONFIG_FILE) if WeeklySpeedScheduler else None
         self.private_vault = PrivateVaultManager(CONFIG_FILE) if PrivateVaultManager else None
+        self.quota_limiter = QuotaLimiter(QUOTA_FILE) if QuotaLimiter else None
         self.lan_mesh = LanMeshNode(http_port=9876) if LanMeshNode and self.config.get("lan_mesh_enabled", True) else None
         if self.lan_mesh:
             self.lan_mesh.start()
@@ -884,6 +897,24 @@ class ParvanEngine:
         t.start()
 
     def on_task_completed(self, task):
+        # Record Quota usage
+        if self.quota_limiter and task.total_size > 0:
+            try:
+                self.quota_limiter.record_usage(task.total_size)
+            except Exception:
+                pass
+
+        # Windows Native Toast Notification
+        if WindowsToastNotifier:
+            try:
+                WindowsToastNotifier.show_toast(
+                    "دانلود با موفقیت تکمیل شد | پروان",
+                    f"{task.filename} ({task.total_size_fmt}) آماده استفاده است.",
+                    file_path=task.save_path
+                )
+            except Exception:
+                pass
+
         # Auto content analysis / tagger if enabled
         if self.config.get("auto_tagger_enabled", True) and SmartAutoTagger:
             try:
@@ -1189,6 +1220,7 @@ class ParvanEngine:
             "total_tasks_count": len(self.tasks),
             "is_vault_unlocked": self.private_vault.is_unlocked if self.private_vault else True,
             "has_vault_pin": bool(self.private_vault.pin_hash) if self.private_vault else False,
+            "quota": self.quota_limiter.check_quota_status() if self.quota_limiter else None,
             "config": self.config,
             "tasks": [t.to_dict() for t in visible_tasks]
         }
@@ -1254,6 +1286,16 @@ class ParvanEngine:
         if QueueBackupManager:
             return QueueBackupManager.import_queue(self, data)
         return 0
+
+    def update_quota_settings(self, daily_limit_bytes=0, monthly_limit_bytes=0, action_on_limit="throttle", throttle_speed_kb=50):
+        if self.quota_limiter:
+            self.quota_limiter.daily_limit_bytes = int(daily_limit_bytes)
+            self.quota_limiter.monthly_limit_bytes = int(monthly_limit_bytes)
+            self.quota_limiter.action_on_limit = str(action_on_limit)
+            self.quota_limiter.throttle_speed_kb = int(throttle_speed_kb)
+            self.quota_limiter.save()
+            return True
+        return False
 
     def crawl_site(self, page_url, category="all", max_depth=1):
         """Crawls website and returns downloadable links."""

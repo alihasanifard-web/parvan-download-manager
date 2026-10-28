@@ -21,7 +21,9 @@ a = Analysis(
         ('lan_mesh.py', '.'),
         ('smart_tagger.py', '.'),
         ('stealth_tunnel.py', '.'),
-        ('virtual_mount.py', '.')
+        ('virtual_mount.py', '.'),
+        ('quota_limiter.py', '.'),
+        ('windows_tray.py', '.')
     ],
     hiddenimports=[
         'features_ext',
@@ -35,7 +37,11 @@ a = Analysis(
         'lan_mesh',
         'smart_tagger',
         'stealth_tunnel',
-        'virtual_mount'
+        'virtual_mount',
+        'quota_limiter',
+        'windows_tray',
+        'pystray',
+        'PIL'
     ],
     hookspath=[],
     hooksconfig={},
