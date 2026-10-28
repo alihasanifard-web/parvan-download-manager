@@ -582,5 +582,18 @@ segment002.ts
         auth_hdr = cs._get_auth_header()
         self.assertTrue(auth_hdr.startswith("Basic "))
 
+    def test_38_browser_cookie_extractor_helpers(self):
+        import browser_cookies
+        browsers = browser_cookies.BrowserCookieExtractor.get_supported_browsers()
+        self.assertIn("edge", browsers)
+        self.assertIn("chrome", browsers)
+
+    def test_39_playlist_url_detector(self):
+        import playlist_extractor
+        yt_pl = "https://www.youtube.com/playlist?list=PL12345678"
+        self.assertTrue(playlist_extractor.PlaylistExtractor.is_playlist_url(yt_pl))
+        single_yt = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        self.assertFalse(playlist_extractor.PlaylistExtractor.is_playlist_url(single_yt))
+
 if __name__ == "__main__":
     unittest.main()

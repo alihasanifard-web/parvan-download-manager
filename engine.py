@@ -111,6 +111,16 @@ try:
 except ImportError:
     CloudSyncEngine = None
 
+try:
+    from browser_cookies import BrowserCookieExtractor
+except ImportError:
+    BrowserCookieExtractor = None
+
+try:
+    from playlist_extractor import PlaylistExtractor
+except ImportError:
+    PlaylistExtractor = None
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
@@ -593,7 +603,7 @@ class DownloadTask:
                 if self.total_size > 0:
                     f.seek(self.total_size - 1)
                     f.write(b'\0')
-        elif self.total_size > 0 and os.path.getsize(self.save_path) != self.total_size:
+        elif self.total_size > 0 and os.path.exists(self.save_path) and os.path.getsize(self.save_path) != self.total_size:
             with open(self.save_path, 'r+b') as f:
                 f.truncate(self.total_size)
 
@@ -1125,6 +1135,16 @@ class ParvanEngine:
         threads = num_threads or self.config.get("default_threads", 16)
         sdir = save_dir or self.config.get("save_directory", os.path.join(os.path.expanduser("~"), "Downloads"))
 
+        # Playlist Auto-Expansion
+        if PlaylistExtractor and PlaylistExtractor.is_playlist_url(url):
+            entries = PlaylistExtractor.extract_playlist_entries(url)
+            if entries:
+                added = []
+                for item in entries:
+                    t = self.add_download(item["url"], num_threads=threads, save_dir=sdir, cookies=cookies, headers=headers, is_vault=is_vault)
+                    added.append(t)
+                return added[0] if added else None
+
         # Debrid / Cloud Seedbox Link Unrestriction
         if DebridEngine and self.config.get("debrid_api_key"):
             try:
@@ -1296,6 +1316,16 @@ class ParvanEngine:
         if QueueBackupManager:
             return QueueBackupManager.import_queue(self, data)
         return 0
+
+    def import_browser_cookies(self, domain, browser="edge"):
+        if BrowserCookieExtractor:
+            return BrowserCookieExtractor.extract_cookies_for_domain(domain, browser=browser)
+        return {}
+
+    def extract_playlist(self, playlist_url, max_items=50):
+        if PlaylistExtractor:
+            return PlaylistExtractor.extract_playlist_entries(playlist_url, max_items=max_items)
+        return []
 
     def sync_to_cloud(self):
         if self.cloud_sync and self.cloud_sync.is_configured:

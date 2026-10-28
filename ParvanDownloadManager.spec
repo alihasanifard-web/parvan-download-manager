@@ -24,7 +24,9 @@ a = Analysis(
         ('virtual_mount.py', '.'),
         ('quota_limiter.py', '.'),
         ('windows_tray.py', '.'),
-        ('cloud_sync.py', '.')
+        ('cloud_sync.py', '.'),
+        ('browser_cookies.py', '.'),
+        ('playlist_extractor.py', '.')
     ],
     hiddenimports=[
         'features_ext',
@@ -42,6 +44,8 @@ a = Analysis(
         'quota_limiter',
         'windows_tray',
         'cloud_sync',
+        'browser_cookies',
+        'playlist_extractor',
         'pystray',
         'PIL'
     ],

@@ -444,6 +444,16 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
                     t.pause()
             engine.save_state()
             res = {"success": True}
+        elif parsed.path == '/api/cookies/import':
+            domain = req_data.get('domain', '')
+            browser = req_data.get('browser', 'edge')
+            cookies = engine.import_browser_cookies(domain, browser=browser)
+            res = {"success": True, "cookies": cookies}
+        elif parsed.path == '/api/playlist/extract':
+            pl_url = req_data.get('url', '')
+            max_i = int(req_data.get('max_items', 50))
+            items = engine.extract_playlist(pl_url, max_items=max_i)
+            res = {"success": True, "items": items}
         elif parsed.path == '/api/cloud/sync_push':
             res = engine.sync_to_cloud()
         elif parsed.path == '/api/cloud/sync_pull':
