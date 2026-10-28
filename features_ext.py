@@ -12,6 +12,7 @@ import re
 import json
 import time
 import urllib.parse
+import urllib.request
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple
 
@@ -359,3 +360,128 @@ class QueueBackupManager:
 
         engine_inst.save_state()
         return imported_count
+
+
+# --- 5. Private Vault / Secret Downloads Manager ---
+class PrivateVaultManager:
+    def __init__(self, config_path: str):
+        self.config_path = config_path
+        self.pin_hash: str = "" # SHA-256
+        self.is_unlocked: bool = False
+        self.load()
+
+    def load(self):
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    vault = data.get("private_vault", {})
+                    self.pin_hash = vault.get("pin_hash", "")
+            except Exception:
+                self.pin_hash = ""
+
+    def save(self):
+        data = {}
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        data["private_vault"] = {
+            "pin_hash": self.pin_hash,
+            "has_pin": bool(self.pin_hash)
+        }
+        try:
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def set_pin(self, new_pin: str, old_pin: str = "") -> bool:
+        new_pin = str(new_pin).strip()
+        if self.pin_hash:
+            import hashlib
+            if hashlib.sha256(old_pin.encode("utf-8")).hexdigest() != self.pin_hash:
+                return False
+        import hashlib
+        self.pin_hash = hashlib.sha256(new_pin.encode("utf-8")).hexdigest() if new_pin else ""
+        self.save()
+        return True
+
+    def unlock(self, pin: str) -> bool:
+        if not self.pin_hash:
+            self.is_unlocked = True
+            return True
+        import hashlib
+        h = hashlib.sha256(str(pin).strip().encode("utf-8")).hexdigest()
+        if h == self.pin_hash:
+            self.is_unlocked = True
+            return True
+        return False
+
+    def lock(self):
+        self.is_unlocked = False
+
+    def filter_visible_tasks(self, tasks: List[Any]) -> List[Any]:
+        if self.is_unlocked:
+            return tasks
+        return [t for t in tasks if not getattr(t, "is_vault", False)]
+
+
+# --- 6. Multi-Platform Webhook Notifier ---
+class MultiPlatformWebhook:
+    @classmethod
+    def send_completion(cls, webhook_url: str, task: Any, webhook_type: str = "generic") -> bool:
+        if not webhook_url:
+            return False
+
+        filename = getattr(task, "filename", "download.bin")
+        size_fmt = getattr(task, "total_size_fmt", "نامشخص")
+        sha256 = getattr(task, "sha256_hash", "") or "محاسبه نشد"
+
+        try:
+            payload: Dict[str, Any] = {}
+            if webhook_type == "discord":
+                payload = {
+                    "username": "Parvan Download Manager",
+                    "avatar_url": "https://raw.githubusercontent.com/alihasanifard-web/parvan-download-manager/main/logo.png",
+                    "embeds": [{
+                        "title": "⚡ دانلود تکمیل شد | Parvan DL",
+                        "description": f"فایل **{filename}** با موفقیت دانلود شد.",
+                        "color": 62965, # Cyan
+                        "fields": [
+                            {"name": "حجم فایل", "value": size_fmt, "inline": True},
+                            {"name": "چک‌سام SHA-256", "value": f"`{sha256[:16]}...`", "inline": True}
+                        ],
+                        "footer": {"text": "پروان دانلود منیجر ۳.۰ • نسل جدید دانلود چندکاناله"}
+                    }]
+                }
+            elif webhook_type == "slack":
+                payload = {
+                    "text": f"⚡ *دانلود با موفقیت پایان یافت:*\n*{filename}* ({size_fmt})\nSHA256: `{sha256[:16]}...`"
+                }
+            else:
+                # Generic JSON
+                payload = {
+                    "event": "task_completed",
+                    "app": "Parvan Download Manager",
+                    "filename": filename,
+                    "total_size": getattr(task, "total_size", 0),
+                    "total_size_fmt": size_fmt,
+                    "sha256_hash": sha256,
+                    "timestamp": time.time()
+                }
+
+            data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            req = urllib.request.Request(
+                webhook_url,
+                data=data_bytes,
+                headers={"Content-Type": "application/json", "User-Agent": "ParvanWebhook/3.0"}
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return resp.status in (200, 204)
+        except Exception as e:
+            print(f"[MultiPlatformWebhook] Send error: {e}")
+            return False
+

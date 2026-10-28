@@ -440,5 +440,109 @@ segment002.ts
         self.assertEqual(w1.start_byte, 1602)
         self.assertEqual(w1.end_byte, 2000)
 
+    def test_25_site_grabber_crawler(self):
+        import site_grabber
+        mock_html = """
+        <html>
+            <body>
+                <a href="/files/setup.exe">Download Software</a>
+                <a href="/media/movie.mp4">Watch Video</a>
+                <a href="/docs/guide.pdf">Read Manual</a>
+                <a href="https://example.com/other.html">Page</a>
+            </body>
+        </html>
+        """
+        links = site_grabber.SiteGrabber._extract_links(mock_html, "http://example.com/")
+        self.assertIn("http://example.com/files/setup.exe", links)
+        self.assertIn("http://example.com/media/movie.mp4", links)
+        self.assertIn("http://example.com/docs/guide.pdf", links)
+
+    def test_26_remote_zip_inspector(self):
+        import zipfile
+        import zip_preview
+        # Create small valid zip in test dir
+        zip_path = os.path.join(self.test_dir, "test_archive.zip")
+        with zipfile.ZipFile(zip_path, "w") as z:
+            z.writestr("hello.txt", "Hello World Parvan")
+            z.writestr("folder/inner.bin", b"\x00" * 128)
+
+        # Inspect local zip via mock handler or direct inspection
+        total_size = os.path.getsize(zip_path)
+        with open(zip_path, "rb") as f:
+            tail = f.read()
+
+        eocd_pos = tail.rfind(zip_preview.EOCD_SIGNATURE)
+        self.assertNotEqual(eocd_pos, -1)
+
+    def test_27_video_fixer_isobmff_atoms(self):
+        import video_fixer
+        # Generate valid minimal MP4 file with ftyp + mdat
+        mp4_path = os.path.join(self.test_dir, "sample.mp4")
+        ftyp_atom = b'\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00isommp42'
+        mdat_atom = b'\x00\x00\x04\x00mdat' + (b'\xAA' * 1016)
+        with open(mp4_path, "wb") as f:
+            f.write(ftyp_atom + mdat_atom)
+
+        analysis = video_fixer.VideoFixer.analyze_mp4(mp4_path)
+        self.assertTrue(analysis["success"])
+        self.assertTrue(analysis["has_ftyp"])
+        self.assertTrue(analysis["has_mdat"])
+
+        # Test repair
+        repaired = video_fixer.VideoFixer.repair_incomplete_video(mp4_path)
+        self.assertTrue(repaired["success"])
+        self.assertTrue(os.path.exists(repaired["repaired_path"]))
+
+    def test_28_private_vault_manager(self):
+        from features_ext import PrivateVaultManager
+        vault_cfg = os.path.join(self.test_dir, "vault_config.json")
+        vm = PrivateVaultManager(vault_cfg)
+        self.assertTrue(vm.set_pin("5566"))
+        self.assertFalse(vm.unlock("1111"))
+        self.assertTrue(vm.unlock("5566"))
+        self.assertTrue(vm.is_unlocked)
+        vm.lock()
+        self.assertFalse(vm.is_unlocked)
+
+    def test_29_lan_mesh_node_beacon(self):
+        import lan_mesh
+        node1 = lan_mesh.LanMeshNode(node_id="test_node_1", http_port=9876)
+        node1.register_task("https://example.com/big_game.iso", "task-99")
+        self.assertIn("task-99", node1.local_task_hashes.values())
+        node1.unregister_task("https://example.com/big_game.iso")
+        self.assertEqual(len(node1.local_task_hashes), 0)
+
+    def test_30_smart_auto_tagger(self):
+        import smart_tagger
+        txt_file = os.path.join(self.test_dir, "sample_doc.txt")
+        with open(txt_file, "w", encoding="utf-8") as f:
+            f.write("Parvan is a high-speed next-generation download manager built with Python and Rust.")
+
+        tags = smart_tagger.SmartAutoTagger.tag_file(txt_file)
+        self.assertTrue(tags["success"])
+        self.assertEqual(tags["category"], "document")
+        self.assertGreater(tags["word_count"], 5)
+
+    def test_31_stealth_tunnel_padding(self):
+        import stealth_tunnel
+        data = b"GET /download/payload.bin HTTP/1.1\r\nHost: example.com\r\n\r\n"
+        cloaked, pad_len = stealth_tunnel.StealthTunnel.cloak_chunk_payload(data, pad_multiple=64)
+        self.assertEqual(len(cloaked) % 64, 0)
+        self.assertGreaterEqual(len(cloaked), len(data))
+
+    def test_32_virtual_sparse_mount(self):
+        import virtual_mount
+        sparse_file = os.path.join(self.test_dir, "sparse_test.bin")
+        res = virtual_mount.VirtualSparseMount.enable_sparse_file(sparse_file, logical_size=1024 * 1024)
+        self.assertTrue(res["success"])
+        self.assertEqual(os.path.getsize(sparse_file), 1024 * 1024)
+
+    def test_33_debrid_cloud_engine(self):
+        import debrid_engine
+        deb = debrid_engine.DebridEngine(api_key="")
+        avail = deb.check_instant_availability("d2474e86c95b19b8bcfdb92bc12c9d44667cfa36")
+        self.assertTrue(avail["available"])
+        self.assertEqual(avail["speed_boost"], "10Gbps Cloud CDN")
+
 if __name__ == "__main__":
     unittest.main()

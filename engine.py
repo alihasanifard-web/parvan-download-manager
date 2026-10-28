@@ -30,13 +30,17 @@ try:
         SiteLoginsManager,
         MultipartArchiveDetective,
         WeeklySpeedScheduler,
-        QueueBackupManager
+        QueueBackupManager,
+        PrivateVaultManager,
+        MultiPlatformWebhook
     )
 except ImportError:
     SiteLoginsManager = None
     MultipartArchiveDetective = None
     WeeklySpeedScheduler = None
     QueueBackupManager = None
+    PrivateVaultManager = None
+    MultiPlatformWebhook = None
 
 try:
     from hls_engine import HLSPlaylistParser, HLSStreamDownloader
@@ -50,6 +54,46 @@ except ImportError:
     CleanDNSResolver = None
     AntiDPISocket = None
     create_antidpi_connection = None
+
+try:
+    from site_grabber import SiteGrabber
+except ImportError:
+    SiteGrabber = None
+
+try:
+    from zip_preview import RemoteZipInspector
+except ImportError:
+    RemoteZipInspector = None
+
+try:
+    from video_fixer import VideoFixer
+except ImportError:
+    VideoFixer = None
+
+try:
+    from debrid_engine import DebridEngine
+except ImportError:
+    DebridEngine = None
+
+try:
+    from lan_mesh import LanMeshNode
+except ImportError:
+    LanMeshNode = None
+
+try:
+    from smart_tagger import SmartAutoTagger
+except ImportError:
+    SmartAutoTagger = None
+
+try:
+    from stealth_tunnel import StealthTunnel
+except ImportError:
+    StealthTunnel = None
+
+try:
+    from virtual_mount import VirtualSparseMount
+except ImportError:
+    VirtualSparseMount = None
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
@@ -83,7 +127,15 @@ DEFAULT_CONFIG = {
     "dynamic_chunk_splitting": True,
     "lan_remote_enabled": True,
     "lan_remote_pin": "1234",
-    "clipboard_watcher_enabled": True
+    "clipboard_watcher_enabled": True,
+    "stealth_tunnel_enabled": True,
+    "virtual_mount_enabled": True,
+    "auto_tagger_enabled": True,
+    "lan_mesh_enabled": True,
+    "webhook_url": "",
+    "webhook_type": "generic",
+    "debrid_api_key": "",
+    "debrid_provider": "real_debrid"
 }
 
 def load_config():
@@ -366,7 +418,7 @@ class ChunkWorker:
 
 
 class DownloadTask:
-    def __init__(self, task_id, url, filename=None, save_dir=None, num_threads=16, proxy=None, cookies=None, headers=None):
+    def __init__(self, task_id, url, filename=None, save_dir=None, num_threads=16, proxy=None, cookies=None, headers=None, is_vault=False):
         self.id = str(task_id)
         self.url = url
         self.num_threads = num_threads
@@ -376,9 +428,13 @@ class DownloadTask:
         self.headers = headers or {}
         self.filename = filename or self._extract_filename()
         self.category = detect_category(self.filename)
+        self.is_vault = bool(is_vault)
+        self.auto_tags = None
         # Smart Folder Routing
         if not save_dir and hasattr(sys.modules[__name__], 'engine') and getattr(sys.modules[__name__].engine, 'config', {}).get('smart_folder_routing', False):
             self.save_dir = get_routed_save_dir(self.save_dir, self.category)
+        if self.is_vault:
+            self.save_dir = os.path.join(self.save_dir, ".vault")
         self.save_path = os.path.join(self.save_dir, self.filename)
 
         self.total_size = 0
@@ -695,6 +751,8 @@ class DownloadTask:
             "antivirus_status": self.antivirus_status,
             "is_magnet": self.is_magnet,
             "is_media_stream": self.is_media_stream,
+            "is_vault": getattr(self, "is_vault", False),
+            "auto_tags": getattr(self, "auto_tags", None),
             "chunks": chunks_info
         }
 
@@ -708,6 +766,10 @@ class ParvanEngine:
         self.notification_callback = None
         self.site_logins = SiteLoginsManager(CONFIG_FILE) if SiteLoginsManager else None
         self.weekly_scheduler = WeeklySpeedScheduler(CONFIG_FILE) if WeeklySpeedScheduler else None
+        self.private_vault = PrivateVaultManager(CONFIG_FILE) if PrivateVaultManager else None
+        self.lan_mesh = LanMeshNode(http_port=9876) if LanMeshNode and self.config.get("lan_mesh_enabled", True) else None
+        if self.lan_mesh:
+            self.lan_mesh.start()
         self._load_saved_state()
         self._start_remote_sync_worker()
         self._start_scheduler_worker()
@@ -822,6 +884,29 @@ class ParvanEngine:
         t.start()
 
     def on_task_completed(self, task):
+        # Auto content analysis / tagger if enabled
+        if self.config.get("auto_tagger_enabled", True) and SmartAutoTagger:
+            try:
+                task.auto_tags = SmartAutoTagger.tag_file(task.save_path)
+            except Exception:
+                pass
+
+        # Multi-Platform Webhook Notification (Discord/Slack/Generic)
+        webhook_url = self.config.get("webhook_url", "")
+        if webhook_url and MultiPlatformWebhook:
+            try:
+                webhook_type = self.config.get("webhook_type", "generic")
+                MultiPlatformWebhook.send_completion(webhook_url, task, webhook_type=webhook_type)
+            except Exception as e:
+                print(f"[Webhook] Error sending notification: {e}")
+
+        # Register in local LAN Mesh so other computers on Wi-Fi can pull from us
+        if self.lan_mesh:
+            try:
+                self.lan_mesh.register_task(task.url, task.id)
+            except Exception:
+                pass
+
         self.save_state()
         # Notify Telegram Bot Bridge if this was a remote task
         if hasattr(task, "_remote_meta") and task._remote_meta:
@@ -995,11 +1080,43 @@ class ParvanEngine:
                 pass
         threading.Thread(target=_play, daemon=True).start()
 
-    def add_download(self, url, num_threads=None, save_dir=None, cookies=None, headers=None):
+    def add_download(self, url, num_threads=None, save_dir=None, cookies=None, headers=None, is_vault=False):
         threads = num_threads or self.config.get("default_threads", 16)
         sdir = save_dir or self.config.get("save_directory", os.path.join(os.path.expanduser("~"), "Downloads"))
+
+        # Debrid / Cloud Seedbox Link Unrestriction
+        if DebridEngine and self.config.get("debrid_api_key"):
+            try:
+                deb = DebridEngine(
+                    api_key=self.config.get("debrid_api_key", ""),
+                    provider=self.config.get("debrid_provider", "real_debrid")
+                )
+                unres = deb.unrestrict_link(url)
+                if unres.get("success") and unres.get("download_url"):
+                    url = unres["download_url"]
+            except Exception:
+                pass
+
+        # Check LAN Mesh for high-speed local peer copy
+        if self.lan_mesh:
+            try:
+                peer = self.lan_mesh.find_peer_for_url(url)
+                if peer:
+                    url = peer["peer_url"]
+            except Exception:
+                pass
+
         task_id = f"parvan-{int(time.time() * 1000)}"
-        task = DownloadTask(task_id, url, num_threads=threads, save_dir=sdir, proxy=self.proxy, cookies=cookies, headers=headers)
+        task = DownloadTask(task_id, url, num_threads=threads, save_dir=sdir, proxy=self.proxy, cookies=cookies, headers=headers, is_vault=is_vault)
+
+        # Virtual Sparse Mount: enable instant pre-reservation
+        if self.config.get("virtual_mount_enabled", True) and VirtualSparseMount:
+            try:
+                os.makedirs(task.save_dir, exist_ok=True)
+                VirtualSparseMount.enable_sparse_file(task.save_path, task.total_size)
+            except Exception:
+                pass
+
         self.tasks[task_id] = task
         task.start()
         self.save_state()
@@ -1057,6 +1174,11 @@ class ParvanEngine:
         incoming_line_mbps = round(agg_speed_mb * 8.35 + 24)
         total_queue_bytes = sum(t.total_size for t in self.tasks.values())
 
+        # Filter vault tasks if locked
+        visible_tasks = list(self.tasks.values())
+        if self.private_vault:
+            visible_tasks = self.private_vault.filter_visible_tasks(visible_tasks)
+
         return {
             "aggregate_speed_mb": round(agg_speed_mb, 1),
             "aggregate_speed_fmt": f"{agg_speed_mb:.1f} MB/s",
@@ -1065,8 +1187,10 @@ class ParvanEngine:
             "total_queue_fmt": format_bytes(total_queue_bytes),
             "active_tasks_count": len(active_tasks),
             "total_tasks_count": len(self.tasks),
+            "is_vault_unlocked": self.private_vault.is_unlocked if self.private_vault else True,
+            "has_vault_pin": bool(self.private_vault.pin_hash) if self.private_vault else False,
             "config": self.config,
-            "tasks": [t.to_dict() for t in self.tasks.values()]
+            "tasks": [t.to_dict() for t in visible_tasks]
         }
 
     def refresh_task_url(self, task_id, new_url, new_headers=None, new_cookies=None):
@@ -1130,6 +1254,55 @@ class ParvanEngine:
         if QueueBackupManager:
             return QueueBackupManager.import_queue(self, data)
         return 0
+
+    def crawl_site(self, page_url, category="all", max_depth=1):
+        """Crawls website and returns downloadable links."""
+        if SiteGrabber:
+            return SiteGrabber.crawl_page(page_url, category=category, max_depth=max_depth, proxy=self.proxy)
+        return []
+
+    def inspect_remote_zip(self, zip_url):
+        """Inspects remote ZIP file without downloading."""
+        if RemoteZipInspector:
+            return RemoteZipInspector.inspect_remote_zip(zip_url, proxy=self.proxy)
+        return {"success": False, "error": "RemoteZipInspector not available"}
+
+    def repair_video(self, task_id_or_path):
+        """Repairs incomplete or damaged MP4 video."""
+        file_path = task_id_or_path
+        if task_id_or_path in self.tasks:
+            file_path = self.tasks[task_id_or_path].save_path
+        if VideoFixer:
+            return VideoFixer.repair_incomplete_video(file_path)
+        return {"success": False, "error": "VideoFixer not available"}
+
+    def unlock_vault(self, pin):
+        if self.private_vault:
+            return self.private_vault.unlock(pin)
+        return False
+
+    def lock_vault(self):
+        if self.private_vault:
+            self.private_vault.lock()
+            return True
+        return False
+
+    def set_vault_pin(self, new_pin, old_pin=""):
+        if self.private_vault:
+            return self.private_vault.set_pin(new_pin, old_pin)
+        return False
+
+    def check_cloud_debrid(self, info_hash_or_link):
+        if DebridEngine:
+            deb = DebridEngine(
+                api_key=self.config.get("debrid_api_key", ""),
+                provider=self.config.get("debrid_provider", "real_debrid")
+            )
+            if len(info_hash_or_link) in (40, 32) and not info_hash_or_link.startswith("http"):
+                return deb.check_instant_availability(info_hash_or_link)
+            else:
+                return deb.unrestrict_link(info_hash_or_link)
+        return {"available": False}
 
     def save_state(self):
         try:

@@ -1031,6 +1031,15 @@
           <button class="btn-pill" id="btnWeeklySchedule" title="جدول زمان‌بندی هفتگی پهنای باند">
             📅 جدول سرعت
           </button>
+          <button class="btn-pill" id="btnSiteGrabber" title="خزشگر و استخراج‌کننده جامع صفحات وب">
+            🕷️ خزشگر سایت
+          </button>
+          <button class="btn-pill" id="btnZipPreview" title="پیش‌نمایش محتوای فایل‌های فشرده">
+            📦 بازبین ZIP
+          </button>
+          <button class="btn-pill" id="btnPrivateVault" title="صندوقچه دانلودهای خصوصی و امن">
+            🔒 صندوقچه امن
+          </button>
         </div>
 
         <!-- 3. حجم کل اپ‌های در حال دانلود -->
@@ -1347,6 +1356,114 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Site Grabber & Web Crawler -->
+  <div class="modal-overlay" id="modalSiteGrabber">
+    <div class="modal-box" style="width: 700px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--cyan-neon);">🕷️</span>
+          <span>خزشگر و استخراج‌کننده جامع صفحات وب (Site Grabber)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnCloseSiteGrabber">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 20px;">
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 14px;">
+          آدرس یک صفحه یا دایرکتوری وب را وارد کنید تا فایل‌های قابل دانلود با عمق دلخواه استخراج شوند:
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+          <input type="text" class="input-styled" id="inputGrabberUrl" placeholder="https://example.com/downloads/ یا آدرس گالری" style="flex: 1; direction: ltr;">
+          <select id="selectGrabberCat" class="input-styled" style="width: 130px; cursor: pointer;">
+            <option value="all">تمام فایل‌ها</option>
+            <option value="media">فیلم و صوت</option>
+            <option value="archive">فایل فشرده</option>
+            <option value="software">نرم‌افزار</option>
+            <option value="document">اسناد و کتاب</option>
+          </select>
+          <button class="btn-pill" id="btnRunSiteGrabber" style="background: var(--cyan-neon); color: #000; font-weight: 700;">
+            شروع پویش
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-main);" id="grabberCountLabel">فایل‌های شناسایی‌شده:</span>
+          <button class="btn-pill" id="btnAddAllGrabbed" style="display: none; background: var(--emerald-neon); color: #000; font-size: 0.76rem; font-weight: 700;">
+            + افزودن تمام موارد به صف
+          </button>
+        </div>
+
+        <div id="grabberResultsList" style="max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+          <div style="color: var(--text-dim); text-align: center; padding: 20px; font-size: 0.82rem;">آدرس صفحه را در کادر بالا وارد کرده و دکمه «شروع پویش» را بزنید.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Remote ZIP Inspector -->
+  <div class="modal-overlay" id="modalZipPreview">
+    <div class="modal-box" style="width: 680px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--amber-neon);">📦</span>
+          <span>بازبین ساختار فایل‌های فشرده (Remote ZIP Inspector)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnCloseZipPreview">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 20px;">
+        <div style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 14px;">
+          لینک فایل ZIP را وارد کنید تا ساختار و محتوای آن بدون دانلود کل فایل در چند ثانیه بررسی شود:
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <input type="text" class="input-styled" id="inputInspectZipUrl" placeholder="https://.../archive.zip" style="flex: 1; direction: ltr;">
+          <button class="btn-pill" id="btnRunZipInspect" style="background: var(--amber-neon); color: #000; font-weight: 700;">
+            بررسی آنی
+          </button>
+        </div>
+
+        <div id="zipInspectMeta" style="display: none; margin-bottom: 12px; font-size: 0.8rem; color: var(--text-main); background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 6px; padding: 10px;">
+          <span>📦 حجم کل فایل فشرده: <strong id="zipInspectTotalSize" style="color: var(--cyan-neon);"></strong></span> • 
+          <span>تعداد فایل‌ها: <strong id="zipInspectCount" style="color: var(--emerald-neon);"></strong></span>
+        </div>
+
+        <div id="zipInspectList" style="max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+          <div style="color: var(--text-dim); text-align: center; padding: 20px; font-size: 0.82rem;">لینک فایل ZIP را وارد کرده و دکمه بررسی را کلیک کنید.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Private Vault Unlock -->
+  <div class="modal-overlay" id="modalPrivateVault">
+    <div class="modal-box" style="width: 440px; max-width: 95vw;">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--cyan-neon);">🔒</span>
+          <span>صندوقچه دانلودهای خصوصی و امن (Private Vault)</span>
+        </div>
+        <div style="cursor: pointer;" id="btnClosePrivateVault">✕</div>
+      </div>
+      <div class="modal-content" style="padding: 24px; text-align: center;">
+        <div style="font-size: 0.84rem; color: var(--text-dim); margin-bottom: 20px;">
+          برای مشاهده و دسترسی به صف دانلودهای خصوصی، پین‌کد امنیتی را وارد کنید:
+        </div>
+        <input type="password" id="inputVaultPin" maxlength="8" placeholder="••••" style="width: 180px; padding: 10px; font-size: 1.4rem; letter-spacing: 6px; text-align: center; background: #000; border: 1px solid var(--cyan-neon); color: var(--cyan-neon); border-radius: 8px; outline: none; margin-bottom: 20px; font-family: var(--font-mono);">
+        <div>
+          <button class="btn-pill" id="btnUnlockVault" style="background: var(--cyan-neon); color: #000; font-weight: 700; padding: 8px 24px;">
+            🔓 بازگشایی صندوقچه
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Drop Target Widget -->
+  <div id="floatingDropTarget" style="position: fixed; bottom: 24px; left: 24px; z-index: 9999; background: rgba(8, 12, 20, 0.85); backdrop-filter: blur(12px); border: 1px dashed var(--cyan-neon); border-radius: 12px; padding: 12px 18px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.8); cursor: pointer; transition: all 0.25s ease;" title="رها کردن لینک جهت دانلود آنی (Drag & Drop Links Here)">
+    <div style="font-size: 1.3rem;">⚡</div>
+    <div>
+      <div style="font-size: 0.78rem; font-weight: 700; color: var(--cyan-neon);">دراپ سریع لینک</div>
+      <div style="font-size: 0.68rem; color: var(--text-dim);">لینک را اینجا رها کنید</div>
     </div>
   </div>
 
@@ -2280,6 +2397,184 @@
 
       modalWeeklyMatrix.classList.remove('show');
       alert('جدول زمان‌بندی هفتگی با موفقیت به‌روزرسانی و فعال شد.');
+    };
+
+    // Site Grabber Modal Logic
+    const modalSiteGrabber = document.getElementById('modalSiteGrabber');
+    document.getElementById('btnSiteGrabber').onclick = () => {
+      playBeep(700, 0.05);
+      modalSiteGrabber.classList.add('show');
+    };
+    document.getElementById('btnCloseSiteGrabber').onclick = () => modalSiteGrabber.classList.remove('show');
+
+    let lastGrabbedLinks = [];
+    document.getElementById('btnRunSiteGrabber').onclick = async () => {
+      const url = document.getElementById('inputGrabberUrl').value.trim();
+      const cat = document.getElementById('selectGrabberCat').value;
+      if (!url) return;
+      playBeep(850, 0.06);
+      const listEl = document.getElementById('grabberResultsList');
+      listEl.innerHTML = '<div style="color: var(--cyan-neon); text-align: center; padding: 20px;">در حال پویش و استخراج پیوندها...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/site_grabber?url=${encodeURIComponent(url)}&category=${cat}`);
+        const data = await res.json();
+        lastGrabbedLinks = data.links || [];
+        document.getElementById('grabberCountLabel').textContent = `فایل‌های شناسایی‌شده: (${lastGrabbedLinks.length} مورد)`;
+
+        if (lastGrabbedLinks.length === 0) {
+          listEl.innerHTML = '<div style="color: var(--text-dim); text-align: center; padding: 20px;">هیچ فایل دانلودی متناسب با فیلتر در این صفحه یافت نشد.</div>';
+          document.getElementById('btnAddAllGrabbed').style.display = 'none';
+          return;
+        }
+
+        document.getElementById('btnAddAllGrabbed').style.display = 'inline-block';
+        listEl.innerHTML = lastGrabbedLinks.map((item, idx) => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 6px; font-size: 0.8rem;">
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 440px;" title="${item.url}">
+              <span style="color: var(--cyan-neon); font-weight: 700;">${item.filename}</span>
+              <div style="font-size: 0.7rem; color: var(--text-dim);">${item.url}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--emerald-neon); font-family: var(--font-mono); font-size: 0.74rem;">${item.size_fmt}</span>
+              <button class="btn-pill" onclick="addSingleGrabbed(${idx})" style="padding: 2px 8px; font-size: 0.72rem;">+ دانلود</button>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {
+        listEl.innerHTML = '<div style="color: #f87171; text-align: center; padding: 20px;">خطا در برقراری ارتباط با خزشگر</div>';
+      }
+    };
+
+    window.addSingleGrabbed = async (idx) => {
+      const item = lastGrabbedLinks[idx];
+      if (item) {
+        playBeep(900, 0.05);
+        await fetch(`${API_BASE}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: item.url, threads: 16 })
+        });
+        fetchTelemetry();
+      }
+    };
+
+    document.getElementById('btnAddAllGrabbed').onclick = async () => {
+      if (lastGrabbedLinks.length === 0) return;
+      playBeep(950, 0.1);
+      const urls = lastGrabbedLinks.map(l => l.url);
+      await fetch(`${API_BASE}/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: urls, threads: 16 })
+      });
+      modalSiteGrabber.classList.remove('show');
+      fetchTelemetry();
+    };
+
+    // Remote ZIP Inspector Modal Logic
+    const modalZipPreview = document.getElementById('modalZipPreview');
+    document.getElementById('btnZipPreview').onclick = () => {
+      playBeep(700, 0.05);
+      modalZipPreview.classList.add('show');
+    };
+    document.getElementById('btnCloseZipPreview').onclick = () => modalZipPreview.classList.remove('show');
+
+    document.getElementById('btnRunZipInspect').onclick = async () => {
+      const url = document.getElementById('inputInspectZipUrl').value.trim();
+      if (!url) return;
+      playBeep(850, 0.06);
+      const listEl = document.getElementById('zipInspectList');
+      const metaBox = document.getElementById('zipInspectMeta');
+      metaBox.style.display = 'none';
+      listEl.innerHTML = '<div style="color: var(--amber-neon); text-align: center; padding: 20px;">در حال خواندن هدر مرکزی و استخراج ساختار آرشیو (Range Requests)...</div>';
+
+      try {
+        const res = await fetch(`${API_BASE}/zip_preview?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          listEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 20px;">${data.error || 'خطا در خواندن فایل فشرده'}</div>`;
+          return;
+        }
+
+        metaBox.style.display = 'block';
+        document.getElementById('zipInspectTotalSize').textContent = data.archive_size_fmt;
+        document.getElementById('zipInspectCount').textContent = `${data.total_files} فایل`;
+
+        listEl.innerHTML = data.files.map(f => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 4px; margin-bottom: 4px; font-size: 0.78rem;">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span>${f.is_directory ? '📁' : '📄'}</span>
+              <span style="color: ${f.is_directory ? 'var(--cyan-neon)' : 'var(--text-main)'}; font-family: var(--font-mono);">${f.path}</span>
+            </div>
+            <div style="display: flex; gap: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); white-space: nowrap;">
+              <span>حجم: ${f.uncompressed_fmt}</span>
+              <span style="color: var(--emerald-neon);">${f.method}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {
+        listEl.innerHTML = '<div style="color: #f87171; text-align: center; padding: 20px;">خطا در برقراری ارتباط با سرور بازبین ZIP</div>';
+      }
+    };
+
+    // Private Vault Modal Logic
+    const modalPrivateVault = document.getElementById('modalPrivateVault');
+    document.getElementById('btnPrivateVault').onclick = () => {
+      playBeep(700, 0.05);
+      modalPrivateVault.classList.add('show');
+    };
+    document.getElementById('btnClosePrivateVault').onclick = () => modalPrivateVault.classList.remove('show');
+
+    document.getElementById('btnUnlockVault').onclick = async () => {
+      const pin = document.getElementById('inputVaultPin').value.trim();
+      playBeep(850, 0.06);
+      const res = await fetch(`${API_BASE}/vault/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        modalPrivateVault.classList.remove('show');
+        document.getElementById('btnPrivateVault').textContent = '🔓 صندوقچه باز است';
+        document.getElementById('btnPrivateVault').style.color = 'var(--emerald-neon)';
+        fetchTelemetry();
+      } else {
+        alert('پین‌کد وارد شده صحیح نمی‌باشد.');
+      }
+    };
+
+    // Floating Drop Target Drag & Drop Events
+    const dropTarget = document.getElementById('floatingDropTarget');
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropTarget.style.borderColor = 'var(--emerald-neon)';
+      dropTarget.style.transform = 'scale(1.08)';
+    });
+    window.addEventListener('dragleave', (e) => {
+      dropTarget.style.borderColor = 'var(--cyan-neon)';
+      dropTarget.style.transform = 'scale(1)';
+    });
+    window.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dropTarget.style.borderColor = 'var(--cyan-neon)';
+      dropTarget.style.transform = 'scale(1)';
+      const text = e.dataTransfer.getData('text');
+      if (text && (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('magnet:?'))) {
+        playBeep(950, 0.1);
+        await fetch(`${API_BASE}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: text.trim(), threads: 16 })
+        });
+        fetchTelemetry();
+      }
+    });
+
+    dropTarget.onclick = () => {
+      document.getElementById('btnOpenModal').click();
     };
 
     // Keyboard shortcut (Ctrl + N or Ctrl + K for new download)

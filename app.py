@@ -243,6 +243,38 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             backup = engine.export_queue()
             self.wfile.write(json.dumps(backup, ensure_ascii=False, indent=2).encode('utf-8'))
             return
+        elif parsed.path == '/api/site_grabber':
+            qs = urllib.parse.parse_qs(parsed.query)
+            target_url = qs.get('url', [''])[0]
+            cat = qs.get('category', ['all'])[0]
+            depth = int(qs.get('depth', ['1'])[0])
+            links = engine.crawl_site(target_url, category=cat, max_depth=depth) if target_url else []
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "links": links}, ensure_ascii=False).encode('utf-8'))
+            return
+        elif parsed.path == '/api/zip_preview':
+            qs = urllib.parse.parse_qs(parsed.query)
+            zip_url = qs.get('url', [''])[0]
+            info = engine.inspect_remote_zip(zip_url) if zip_url else {"success": False, "error": "No URL"}
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(info, ensure_ascii=False).encode('utf-8'))
+            return
+        elif parsed.path == '/api/cloud/check':
+            qs = urllib.parse.parse_qs(parsed.query)
+            q_target = qs.get('target', [''])[0]
+            res = engine.check_cloud_debrid(q_target)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(res, ensure_ascii=False).encode('utf-8'))
+            return
         elif parsed.path == '/api/clipboard':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -322,13 +354,31 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
             threads = int(req_data.get('threads', 16))
             cookies = req_data.get('cookies', None)
             headers = req_data.get('headers', None)
+            is_vault = bool(req_data.get('is_vault', False))
             if url:
-                res = engine.add_download(url, num_threads=threads, cookies=cookies, headers=headers)
+                res = engine.add_download(url, num_threads=threads, cookies=cookies, headers=headers, is_vault=is_vault)
         elif parsed.path == '/api/batch':
             urls = req_data.get('urls', [])
             threads = int(req_data.get('threads', 16))
             if urls:
                 res = {"success": True, "tasks": engine.add_batch_downloads(urls, num_threads=threads)}
+        elif parsed.path == '/api/video/repair':
+            task_id = req_data.get('task_id', '')
+            file_path = req_data.get('file_path', '')
+            target = file_path or task_id
+            res = engine.repair_video(target)
+        elif parsed.path == '/api/vault/unlock':
+            pin = req_data.get('pin', '')
+            success = engine.unlock_vault(pin)
+            res = {"success": success}
+        elif parsed.path == '/api/vault/lock':
+            engine.lock_vault()
+            res = {"success": True}
+        elif parsed.path == '/api/vault/set_pin':
+            new_pin = req_data.get('new_pin', '')
+            old_pin = req_data.get('old_pin', '')
+            success = engine.set_vault_pin(new_pin, old_pin)
+            res = {"success": success}
         elif parsed.path == '/api/pause':
             task_id = req_data.get('task_id', '')
             res = {"success": engine.pause_download(task_id)}
