@@ -574,5 +574,13 @@ segment002.ts
             f.write(b"\x00" * 4096)
         self.assertEqual(os.path.getsize(test_video), 4096)
 
+    def test_37_cloud_sync_webdav_payload(self):
+        import cloud_sync
+        cs = cloud_sync.CloudSyncEngine("https://dav.example.com", "parvan_user", "secret123")
+        self.assertTrue(cs.is_configured)
+        self.assertEqual(cs.remote_path, "/parvan_sync.json")
+        auth_hdr = cs._get_auth_header()
+        self.assertTrue(auth_hdr.startswith("Basic "))
+
 if __name__ == "__main__":
     unittest.main()

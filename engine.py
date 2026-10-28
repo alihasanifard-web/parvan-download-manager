@@ -106,6 +106,11 @@ except ImportError:
     WindowsToastNotifier = None
     WindowsShellIntegration = None
 
+try:
+    from cloud_sync import CloudSyncEngine
+except ImportError:
+    CloudSyncEngine = None
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 TASKS_DB_FILE = os.path.join(CURRENT_DIR, "tasks_state.json")
 CONFIG_FILE = os.path.join(CURRENT_DIR, "config.json")
@@ -780,6 +785,11 @@ class ParvanEngine:
         self.weekly_scheduler = WeeklySpeedScheduler(CONFIG_FILE) if WeeklySpeedScheduler else None
         self.private_vault = PrivateVaultManager(CONFIG_FILE) if PrivateVaultManager else None
         self.quota_limiter = QuotaLimiter(QUOTA_FILE) if QuotaLimiter else None
+        self.cloud_sync = CloudSyncEngine(
+            endpoint_url=self.config.get("webdav_url", ""),
+            username=self.config.get("webdav_user", ""),
+            password=self.config.get("webdav_pass", "")
+        ) if CloudSyncEngine else None
         self.lan_mesh = LanMeshNode(http_port=9876) if LanMeshNode and self.config.get("lan_mesh_enabled", True) else None
         if self.lan_mesh:
             self.lan_mesh.start()
@@ -1286,6 +1296,21 @@ class ParvanEngine:
         if QueueBackupManager:
             return QueueBackupManager.import_queue(self, data)
         return 0
+
+    def sync_to_cloud(self):
+        if self.cloud_sync and self.cloud_sync.is_configured:
+            backup_data = self.export_queue()
+            return self.cloud_sync.push_backup(backup_data)
+        return {"success": False, "error": "Cloud sync not configured"}
+
+    def restore_from_cloud(self):
+        if self.cloud_sync and self.cloud_sync.is_configured:
+            res = self.cloud_sync.pull_backup()
+            if res.get("success") and "data" in res:
+                imported = self.import_queue(res["data"])
+                return {"success": True, "imported_tasks": imported}
+            return res
+        return {"success": False, "error": "Cloud sync not configured"}
 
     def update_quota_settings(self, daily_limit_bytes=0, monthly_limit_bytes=0, action_on_limit="throttle", throttle_speed_kb=50):
         if self.quota_limiter:

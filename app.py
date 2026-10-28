@@ -444,6 +444,10 @@ class ParvanHttpHandler(SimpleHTTPRequestHandler):
                     t.pause()
             engine.save_state()
             res = {"success": True}
+        elif parsed.path == '/api/cloud/sync_push':
+            res = engine.sync_to_cloud()
+        elif parsed.path == '/api/cloud/sync_pull':
+            res = engine.restore_from_cloud()
         elif parsed.path == '/api/quota/update':
             daily = req_data.get('daily_limit_bytes', 0)
             monthly = req_data.get('monthly_limit_bytes', 0)

@@ -23,7 +23,8 @@ a = Analysis(
         ('stealth_tunnel.py', '.'),
         ('virtual_mount.py', '.'),
         ('quota_limiter.py', '.'),
-        ('windows_tray.py', '.')
+        ('windows_tray.py', '.'),
+        ('cloud_sync.py', '.')
     ],
     hiddenimports=[
         'features_ext',
@@ -40,6 +41,7 @@ a = Analysis(
         'virtual_mount',
         'quota_limiter',
         'windows_tray',
+        'cloud_sync',
         'pystray',
         'PIL'
     ],
