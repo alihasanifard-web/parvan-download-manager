@@ -70,9 +70,9 @@ class ParvanInstallerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("برنامه نصب پروان دانلود منیجر | Setup Wizard")
-        self.geometry("580x440")
+        self.geometry("620x460")
         self.resizable(False, False)
-        self.configure(bg="#030407")
+        self.configure(bg="#04060A")
 
         # Set window icon if exists
         base_dir = get_base_dir()
@@ -91,12 +91,12 @@ class ParvanInstallerApp(tk.Tk):
             pass
         self.style.configure(
             "Parvan.Horizontal.TProgressbar",
-            troughcolor="#080c14",
+            troughcolor="#0B101D",
             background="#00F5FF",
-            bordercolor="#111827",
+            bordercolor="#1E293B",
             lightcolor="#00F5FF",
             darkcolor="#00F5FF",
-            thickness=8
+            thickness=10
         )
 
         default_dir = os.path.join(os.environ.get("LOCALAPPDATA", "C:\\"), "Programs", "ParvanDownloadManager")
@@ -106,7 +106,7 @@ class ParvanInstallerApp(tk.Tk):
         self.auto_start = tk.BooleanVar(value=False)
         self.launch_after = tk.BooleanVar(value=True)
 
-        self.container = tk.Frame(self, bg="#030407")
+        self.container = tk.Frame(self, bg="#04060A")
         self.container.pack(fill="both", expand=True)
 
         self.load_logo()
@@ -129,7 +129,7 @@ class ParvanInstallerApp(tk.Tk):
             widget.destroy()
 
     def render_step_bar(self, current_step=1):
-        step_bar = tk.Frame(self.container, bg="#060912", height=28)
+        step_bar = tk.Frame(self.container, bg="#070B14", height=32)
         step_bar.pack(fill="x", side="top")
         steps = [
             ("۱. معرفی", 1),
@@ -137,15 +137,16 @@ class ParvanInstallerApp(tk.Tk):
             ("۳. استخراج", 3),
             ("۴. اتمام", 4)
         ]
-        wrap = tk.Frame(step_bar, bg="#060912")
-        wrap.pack(anchor="center", pady=4)
+        wrap = tk.Frame(step_bar, bg="#070B14")
+        wrap.pack(anchor="center", pady=5)
         for name, num in steps:
             is_active = num == current_step
-            color = "#00F5FF" if is_active else "#475569"
+            is_done = num < current_step
+            color = "#00F5FF" if is_active else ("#00FF88" if is_done else "#475569")
             weight = "bold" if is_active else "normal"
-            tk.Label(wrap, text=name, font=("Tahoma", 8, weight), fg=color, bg="#060912").pack(side="right", padx=10)
+            tk.Label(wrap, text=name, font=("Tahoma", 8, weight), fg=color, bg="#070B14").pack(side="right", padx=12)
             if num < 4:
-                tk.Label(wrap, text="‹", font=("Tahoma", 8), fg="#334155", bg="#060912").pack(side="right")
+                tk.Label(wrap, text="‹", font=("Tahoma", 8), fg="#1E293B", bg="#070B14").pack(side="right")
 
     def show_welcome_screen(self):
         self.clear_container()
@@ -179,29 +180,30 @@ class ParvanInstallerApp(tk.Tk):
         lbl_desc.pack(anchor="e", pady=(0, 10))
 
         # Highlights Grid
-        grid_frame = tk.Frame(body, bg="#080c14", bd=1, relief="solid", padx=14, pady=10)
-        grid_frame.pack(fill="x", pady=6)
+        grid_frame = tk.Frame(body, bg="#080D1A", bd=1, relief="solid", padx=16, pady=12)
+        grid_frame.pack(fill="x", pady=8)
 
         feats = [
-            ("⚡ دانلود ۳۲ کانکشن توربو", "تقسیم هوشمند چانک‌ها و تجمیع کارت‌های شبکه"),
-            ("🛡️ موتور ضدتحریم و Anti-DPI", "دور زدن اختلالات شبکه بدون نیاز به فیلترشکن"),
-            ("🎬 اسنیفر ویدیو و M3U8", "دریافت استریم‌های آنلاین با انتخاب کیفیت"),
-            ("🧲 موتور بومی تورنت و مگنت", "دانلود فایل‌های P2P و بیت‌تورنت بدون افت سرعت")
+            ("⚡ دانلود ۳۲ کانکشن توربو", "تقسیم هوشمند چانک‌ها، ضد فریز ۹۹٪ و تجمیع کارت‌های شبکه"),
+            ("🛡️ موتور ضدتحریم و Anti-DPI", "دور زدن اختلالات شبکه بدون نیاز به فیلترشکن خارجی"),
+            ("🎬 اسنیفر ویدیو و M3U8", "دریافت استریم‌های آنلاین با انتخاب کیفیت و پخش زنده حین دانلود"),
+            ("🧲 موتور بومی تورنت و مگنت", "دانلود فایل‌های P2P و بیت‌تورنت با اعتبارسنجی قطعات"),
+            ("🔒 صندوقچه امن و سهمیه اینترنت", "رمزگذاری صف دانلود و کنترل خودکار حجم مصرفی روزانه")
         ]
         for title, sub in feats:
-            row = tk.Frame(grid_frame, bg="#080c14")
+            row = tk.Frame(grid_frame, bg="#080D1A")
             row.pack(fill="x", pady=3)
-            tk.Label(row, text=title, font=("Tahoma", 8, "bold"), fg="#00F5FF", bg="#080c14").pack(side="right")
-            tk.Label(row, text=f"— {sub}", font=("Tahoma", 7), fg="#94A3B8", bg="#080c14").pack(side="right", padx=6)
+            tk.Label(row, text=title, font=("Tahoma", 8, "bold"), fg="#00F5FF", bg="#080D1A").pack(side="right")
+            tk.Label(row, text=f"— {sub}", font=("Tahoma", 7), fg="#94A3B8", bg="#080D1A").pack(side="right", padx=6)
 
         # Footer
-        footer = tk.Frame(self.container, bg="#060912", height=50)
+        footer = tk.Frame(self.container, bg="#070B14", height=55)
         footer.pack(fill="x", side="bottom")
 
-        btn_cancel = tk.Button(footer, text="انصراف", font=("Tahoma", 9), bg="#1e293b", fg="#F3F4F6", relief="flat", padx=16, pady=5, command=self.destroy)
+        btn_cancel = tk.Button(footer, text="انصراف", font=("Tahoma", 9), bg="#1E293B", fg="#F8FAFC", activebackground="#334155", activeforeground="#FFFFFF", relief="flat", padx=18, pady=6, cursor="hand2", command=self.destroy)
         btn_cancel.pack(side="left", padx=20, pady=10)
 
-        btn_next = tk.Button(footer, text="بعدی >", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#030407", relief="flat", padx=22, pady=5, command=self.show_directory_screen)
+        btn_next = tk.Button(footer, text="بعدی >", font=("Tahoma", 9, "bold"), bg="#00F5FF", fg="#04060A", activebackground="#38BDF8", activeforeground="#000000", relief="flat", padx=24, pady=6, cursor="hand2", command=self.show_directory_screen)
         btn_next.pack(side="right", padx=20, pady=10)
 
     def show_directory_screen(self):

@@ -16,33 +16,33 @@
       --font-fa: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       
-      /* OLED Deep Tech Palette (UI/UX Pro Max certified) */
-      --bg-base: #07090E;
-      --bg-sidebar: #0B0F19;
-      --bg-surface: #101626;
-      --bg-surface-elevated: #162035;
-      --bg-card: rgba(16, 22, 38, 0.75);
-      --border-subtle: #1C2740;
-      --border-active: #2D3F66;
+      /* OLED Deep Tech Cyber Palette (UI/UX Pro Max 3.0) */
+      --bg-base: #04060A;
+      --bg-sidebar: #070B12;
+      --bg-surface: rgba(13, 19, 33, 0.75);
+      --bg-surface-elevated: rgba(22, 32, 54, 0.85);
+      --bg-card: rgba(12, 18, 30, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(0, 245, 255, 0.35);
       
       --cyan-neon: #00F5FF;
-      --cyan-glow: rgba(0, 245, 255, 0.28);
-      --emerald-neon: #10B981;
-      --emerald-glow: rgba(16, 185, 129, 0.25);
-      --amber-neon: #F59E0B;
-      --violet-neon: #8B5CF6;
-      --rose-neon: #F43F5E;
+      --cyan-glow: rgba(0, 245, 255, 0.35);
+      --emerald-neon: #00FF88;
+      --emerald-glow: rgba(0, 255, 136, 0.30);
+      --amber-neon: #FFB800;
+      --violet-neon: #A855F7;
+      --rose-neon: #FF3366;
       
-      --text-main: #F3F4F6;
+      --text-main: #FFFFFF;
       --text-muted: #94A3B8;
-      --text-dim: #4B5565;
+      --text-dim: #64748B;
       
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --radius-lg: 18px;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
       --radius-full: 9999px;
       
-      --transition: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      --transition: 220ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     *, *::before, *::after {
@@ -493,7 +493,8 @@
     }
 
     .btn-pill {
-      background: var(--bg-surface);
+      background: rgba(18, 25, 42, 0.7);
+      backdrop-filter: blur(10px);
       border: 1px solid var(--border-subtle);
       color: var(--text-muted);
       border-radius: var(--radius-sm);
@@ -506,11 +507,18 @@
       cursor: pointer;
       font-family: inherit;
       transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
     }
     .btn-pill:hover {
-      background: var(--bg-surface-elevated);
-      color: var(--text-main);
-      border-color: var(--border-active);
+      background: rgba(30, 42, 70, 0.85);
+      color: #FFFFFF;
+      border-color: var(--cyan-neon);
+      box-shadow: 0 0 14px rgba(0, 245, 255, 0.22);
+      transform: translateY(-1px);
+    }
+    .btn-pill:active {
+      transform: translateY(0);
     }
 
     /* Tasks Queue View */
@@ -526,6 +534,7 @@
     /* Task Card */
     .task-card {
       background: var(--bg-surface);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       padding: 16px 20px;
@@ -536,12 +545,14 @@
       position: relative;
     }
     .task-card:hover {
-      border-color: var(--border-active);
-      background: var(--bg-card);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      border-color: rgba(0, 245, 255, 0.4);
+      background: rgba(18, 26, 46, 0.85);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 245, 255, 0.08);
+      transform: translateY(-2px);
     }
     .task-card.active-state {
       border-right: 3px solid var(--cyan-neon);
+      box-shadow: inset 4px 0 16px rgba(0, 245, 255, 0.08);
     }
 
     .task-top-row {
@@ -702,16 +713,17 @@
 
     .modal-box {
       width: 580px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-active);
+      background: rgba(10, 16, 28, 0.88);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 245, 255, 0.35);
       border-radius: var(--radius-lg);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9), 0 0 35px var(--cyan-glow);
+      box-shadow: 0 28px 75px rgba(0, 0, 0, 0.95), 0 0 35px rgba(0, 245, 255, 0.15);
       overflow: hidden;
-      transform: scale(0.96);
-      transition: transform var(--transition);
+      transform: scale(0.95) translateY(8px);
+      transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     .modal-overlay.show .modal-box {
-      transform: scale(1);
+      transform: scale(1) translateY(0);
     }
 
     .modal-head {
