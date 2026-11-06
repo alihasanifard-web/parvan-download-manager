@@ -378,7 +378,7 @@ class ChunkWorker:
         else:
             opener = urllib.request.build_opener()
 
-        max_retries = 5
+        max_retries = 8
         retry_delay = 1.0
 
         for attempt in range(max_retries):
@@ -387,14 +387,26 @@ class ChunkWorker:
             try:
                 # Re-calculate current start byte in case of partial progress before retry
                 cur_start = self.start_byte + self.downloaded
-                if cur_start > self.end_byte:
+                if self.end_byte > 0 and cur_start > self.end_byte:
                     self.status = "done"
                     return
-                req.headers['Range'] = f'bytes={cur_start}-{self.end_byte}'
+                if self.end_byte > 0:
+                    req.headers['Range'] = f'bytes={cur_start}-{self.end_byte}'
 
-                with opener.open(req, timeout=15) as resp:
-                    with open(self.file_path, 'r+b') as f:
-                        f.seek(cur_start)
+                with opener.open(req, timeout=20) as resp:
+                    # If server returned 200 OK (ignored Range) and this is a secondary worker:
+                    if resp.status == 200 and self.chunk_id > 0:
+                        self.status = "done"
+                        return
+
+                    # If 416 Range Not Satisfiable
+                    if resp.status == 416:
+                        self.status = "done"
+                        return
+
+                    with open(self.file_path, 'r+b' if os.path.exists(self.file_path) else 'wb') as f:
+                        if cur_start > 0:
+                            f.seek(cur_start)
                         buf_size = 128 * 1024 # 128 KB high-speed buffer
                         while not self._stop_flag and not self.task.is_paused:
                             # Apply global speed limiter if enabled
@@ -409,7 +421,7 @@ class ChunkWorker:
                                 chunk_len = len(data)
                                 self.downloaded += chunk_len
                                 with self.task.lock:
-                                    self.task.downloaded_bytes += chunk_len
+                                    self.task.downloaded_bytes = sum(w.downloaded for w in self.task.chunk_workers)
 
                                 elapsed = time.time() - chunk_start_t
                                 expected_time = chunk_len / per_thread_bps
@@ -423,9 +435,9 @@ class ChunkWorker:
                                 chunk_len = len(data)
                                 self.downloaded += chunk_len
                                 with self.task.lock:
-                                    self.task.downloaded_bytes += chunk_len
+                                    self.task.downloaded_bytes = sum(w.downloaded for w in self.task.chunk_workers)
 
-                if self.downloaded >= self.total_bytes:
+                if self.downloaded >= self.total_bytes or self.total_bytes <= 0:
                     self.status = "done"
                     return
                 elif self.task.is_paused:
@@ -506,21 +518,28 @@ class DownloadTask:
             self.total_size = 500 * 1024 * 1024 # Estimated seed size for magnet metadata
             self.category = "archive"
             return
+
+        opener = None
+        if "127.0.0.1" in self.url or "localhost" in self.url:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        elif self.proxy:
+            proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
+            opener = urllib.request.build_opener(proxy_handler)
+        else:
+            opener = urllib.request.build_opener()
+
         try:
             req = urllib.request.Request(self.url, method='HEAD')
-            req.add_header('User-Agent', 'ParvanDownloadManager/2.5')
-            if "127.0.0.1" in self.url or "localhost" in self.url:
-                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-            elif self.proxy:
-                proxy_handler = urllib.request.ProxyHandler({'http': self.proxy, 'https': self.proxy})
-                opener = urllib.request.build_opener(proxy_handler)
-            else:
-                opener = urllib.request.build_opener()
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ParvanDownloadManager/3.0')
 
-            with opener.open(req, timeout=10) as resp:
+            with opener.open(req, timeout=12) as resp:
+                final_url = resp.geturl()
+                if final_url:
+                    self.url = final_url
+
                 headers = resp.headers
                 content_len = headers.get('Content-Length')
-                if content_len:
+                if content_len and content_len.isdigit():
                     self.total_size = int(content_len)
                 
                 # Check disposition filename
@@ -528,17 +547,56 @@ class DownloadTask:
                 if disp and 'filename=' in disp:
                     fpart = disp.split('filename=')[-1].strip(' "\'')
                     if fpart:
-                        self.filename = fpart
+                        self.filename = urllib.parse.unquote(fpart)
+                        self.save_path = os.path.join(self.save_dir, self.filename)
+                        self.category = detect_category(self.filename)
+                else:
+                    # Extract from resolved destination URL
+                    parsed_path = urllib.parse.urlparse(self.url).path
+                    candidate = os.path.basename(parsed_path)
+                    if candidate and ('.' in candidate or not ('.' in self.filename)):
+                        self.filename = urllib.parse.unquote(candidate)
                         self.save_path = os.path.join(self.save_dir, self.filename)
                         self.category = detect_category(self.filename)
 
                 accept_ranges = headers.get('Accept-Ranges', 'none')
-                self.support_ranges = accept_ranges.lower() == 'bytes'
+                self.support_ranges = (accept_ranges.lower() == 'bytes')
         except Exception as e:
-            print(f"[Task {self.id}] Probe warning: {e}")
-            # Fallback estimation if HEAD blocked
-            if self.total_size == 0:
-                self.total_size = 100 * 1024 * 1024 # 100 MB placeholder if unknown
+            print(f"[Task {self.id}] Probe HEAD warning: {e}")
+            # Robust fallback: Try GET with Range: bytes=0-0 to resolve redirects & total size
+            try:
+                get_req = urllib.request.Request(self.url)
+                get_req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ParvanDownloadManager/3.0')
+                get_req.add_header('Range', 'bytes=0-0')
+                with opener.open(get_req, timeout=12) as g_resp:
+                    final_url = g_resp.geturl()
+                    if final_url:
+                        self.url = final_url
+                    cr = g_resp.headers.get('Content-Range')
+                    if cr and '/' in cr:
+                        tot_str = cr.split('/')[-1]
+                        if tot_str.isdigit():
+                            self.total_size = int(tot_str)
+                            self.support_ranges = True
+                    elif g_resp.headers.get('Content-Length') and g_resp.headers.get('Content-Length').isdigit():
+                        self.total_size = int(g_resp.headers.get('Content-Length'))
+                    
+                    disp = g_resp.headers.get('Content-Disposition')
+                    if disp and 'filename=' in disp:
+                        fpart = disp.split('filename=')[-1].strip(' "\'')
+                        if fpart:
+                            self.filename = urllib.parse.unquote(fpart)
+                            self.save_path = os.path.join(self.save_dir, self.filename)
+                            self.category = detect_category(self.filename)
+                    else:
+                        parsed_path = urllib.parse.urlparse(self.url).path
+                        candidate = os.path.basename(parsed_path)
+                        if candidate and ('.' in candidate or not ('.' in self.filename)):
+                            self.filename = urllib.parse.unquote(candidate)
+                            self.save_path = os.path.join(self.save_dir, self.filename)
+                            self.category = detect_category(self.filename)
+            except Exception as e2:
+                print(f"[Task {self.id}] Probe GET fallback warning: {e2}")
 
     def start(self):
         self.is_paused = False
@@ -607,19 +665,25 @@ class DownloadTask:
             with open(self.save_path, 'r+b') as f:
                 f.truncate(self.total_size)
 
+        # Single-thread fallback if Range is not supported
+        if not self.support_ranges or self.total_size <= 0:
+            effective_threads = 1
+        else:
+            effective_threads = self.num_threads
+
         # Create chunk slices
         if not self.chunk_workers:
-            part_size = math.ceil(self.total_size / self.num_threads)
+            part_size = math.ceil(self.total_size / effective_threads) if self.total_size > 0 else 0
             self.chunk_workers = []
             bonding_ips = engine.config.get("bonded_interfaces", []) if engine.config.get("network_bonding_enabled", False) else []
-            for i in range(self.num_threads):
+            for i in range(effective_threads):
                 start = i * part_size
-                end = min(self.total_size - 1, (i + 1) * part_size - 1)
+                end = min(self.total_size - 1, (i + 1) * part_size - 1) if self.total_size > 0 else 0
                 bind_ip = bonding_ips[i % len(bonding_ips)] if bonding_ips else None
                 w = ChunkWorker(self, i, start, end, self.save_path, proxy=self.proxy, bind_ip=bind_ip)
                 self.chunk_workers.append(w)
 
-        self._executor = ThreadPoolExecutor(max_workers=self.num_threads)
+        self._executor = ThreadPoolExecutor(max_workers=effective_threads)
         futures = []
         for w in self.chunk_workers:
             if not self.is_paused:
@@ -628,6 +692,8 @@ class DownloadTask:
         # Monitor loop
         while not self.is_paused and any(not f.done() for f in futures):
             time.sleep(0.3)
+            with self.lock:
+                self.downloaded_bytes = sum(w.downloaded for w in self.chunk_workers)
             now = time.time()
             dt = now - self._last_calc_time
             if dt >= 0.5:
@@ -669,10 +735,21 @@ class DownloadTask:
         if self.is_paused:
             self.status = "paused"
             self.speed_bps = 0
-        elif self.downloaded_bytes >= self.total_size and self.total_size > 0:
-            self.status = "completed"
-            self.speed_bps = 0
-            self.eta_seconds = 0
+        else:
+            all_done = all(w.status == "done" for w in self.chunk_workers)
+            has_error = any(w.status == "error" for w in self.chunk_workers)
+            with self.lock:
+                self.downloaded_bytes = sum(w.downloaded for w in self.chunk_workers)
+
+            if all_done and (self.total_size <= 0 or self.downloaded_bytes >= self.total_size):
+                self.status = "completed"
+                self.speed_bps = 0
+                self.eta_seconds = 0
+                if self.total_size > 0:
+                    self.downloaded_bytes = self.total_size
+            elif has_error:
+                self.status = "error"
+                self.speed_bps = 0
 
             # Calculate SHA256 integrity hash if enabled
             if engine.config.get("checksum_validation", True):
