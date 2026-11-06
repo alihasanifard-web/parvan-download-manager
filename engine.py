@@ -604,6 +604,21 @@ class DownloadTask:
         threading.Thread(target=self._run_download, daemon=True).start()
 
     def _run_download(self):
+        try:
+            self._do_run_download()
+        except Exception as e:
+            print(f"[Task {self.id}] Critical download loop error: {e}")
+            self.status = "error"
+            self.speed_bps = 0
+        finally:
+            if self._executor:
+                try:
+                    self._executor.shutdown(wait=False)
+                except Exception:
+                    pass
+                self._executor = None
+
+    def _do_run_download(self):
         # Native BitTorrent / Magnet handling
         if self.is_magnet and BitTorrentClient is not None:
             meta = TorrentMeta.from_magnet(self.url)
@@ -729,8 +744,13 @@ class DownloadTask:
                             idle_w.status = "pending"
                             idle_w._stop_flag = False
                             idle_w._split_parent = True
-                            if self._executor:
-                                futures.append(self._executor.submit(idle_w.run))
+                            if self._executor and not getattr(self._executor, '_shutdown', False):
+                                try:
+                                    futures.append(self._executor.submit(idle_w.run))
+                                except Exception:
+                                    threading.Thread(target=idle_w.run, daemon=True).start()
+                            else:
+                                threading.Thread(target=idle_w.run, daemon=True).start()
 
         if self.is_paused:
             self.status = "paused"
